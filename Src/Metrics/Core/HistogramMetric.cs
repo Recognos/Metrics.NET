@@ -59,8 +59,9 @@ namespace Metrics.Core
                 case SamplingType.FavourRecent: return new ExponentiallyDecayingReservoir();
                 case SamplingType.LongTerm: return new UniformReservoir();
                 case SamplingType.SlidingWindow: return new SlidingWindowReservoir();
+                case SamplingType.SingleSnapshot: return new SingleSnapshotReservoir();
             }
-            throw new InvalidOperationException("Sampling type not implemented " + samplingType.ToString());
+            throw new InvalidOperationException("Sampling type not implemented " + samplingType);
         }
     }
 }

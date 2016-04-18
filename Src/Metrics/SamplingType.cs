@@ -32,6 +32,12 @@ namespace Metrics
         /// A histogram with a sliding window reservoir produces quantiles which are representative of the past N measurements.
         /// More information about <a href="http://metrics.codahale.com/manual/core/#man-core-histograms">Exponentially Decaying Reservoir</a>
         /// </summary>
-        SlidingWindow
+        SlidingWindow,
+
+        /// <summary>
+        /// Sampling will be done with a Sliding Window Reservoir, but the reservoir will be reset after each snapshot.
+        /// This is useful for sending reports, e.g. to Graphite.
+        /// </summary>
+        SingleSnapshot
     }
 }
