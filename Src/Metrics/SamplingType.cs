@@ -16,7 +16,7 @@ namespace Metrics
         FavourRecent,
 
         /// <summary>
-        /// Sampling will done with a Uniform Reservoir.
+        /// Sampling will be done with a Uniform Reservoir.
         /// </summary>
         /// <remarks>
         /// A histogram with a uniform reservoir produces quantiles which are valid for the entirely of the histogram’s lifetime.
@@ -28,10 +28,16 @@ namespace Metrics
         LongTerm,
 
         /// <summary>
-        /// Sampling will done with a Sliding Window Reservoir.
+        /// Sampling will be done with a Sliding Window Reservoir.
         /// A histogram with a sliding window reservoir produces quantiles which are representative of the past N measurements.
         /// More information about <a href="http://metrics.codahale.com/manual/core/#man-core-histograms">Exponentially Decaying Reservoir</a>
         /// </summary>
-        SlidingWindow
+        SlidingWindow,
+
+        /// <summary>
+        /// Sampling will be done with a Sliding Window Reservoir, but the reservoir will be reset after each snapshot.
+        /// This is useful for sending reports, e.g. to Graphite.
+        /// </summary>
+        SingleSnapshot
     }
 }
