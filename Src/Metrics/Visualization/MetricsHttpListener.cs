@@ -184,6 +184,9 @@ namespace Metrics.Visualization
                 case "/v1/health":
                     WriteHealthStatus(context, this.healthStatus);
                     break;
+                case "/prometheus":
+                    WritePrometheusMetrics(context, this.metricsDataProvider, this.healthStatus);
+                    break;
                 case "/text":
                     WriteTextMetrics(context, this.metricsDataProvider, this.healthStatus);
                     break;
@@ -215,6 +218,12 @@ namespace Metrics.Visualization
         private static void WriteNotFound(HttpListenerContext context)
         {
             WriteString(context, NotFoundResponse, "text/plain", 404, "NOT FOUND");
+        }
+
+        private static void WritePrometheusMetrics(HttpListenerContext context, MetricsDataProvider metricsDataProvider, Func<HealthStatus> healthStatus)
+        {
+            var text = PrometheusReport.RenderMetrics(metricsDataProvider.CurrentMetricsData, healthStatus);
+            WriteString(context, text, "text/plain");
         }
 
         private static void WriteTextMetrics(HttpListenerContext context, MetricsDataProvider metricsDataProvider, Func<HealthStatus> healthStatus)
