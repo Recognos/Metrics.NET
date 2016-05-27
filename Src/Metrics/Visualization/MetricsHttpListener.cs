@@ -207,7 +207,7 @@ namespace Metrics.Visualization
             var httpStatus = status.IsHealthy ? 200 : 500;
             var httpStatusDescription = status.IsHealthy ? "OK" : "Internal Server Error";
 
-            WriteString(context, json, JsonHealthChecks.HealthChecksMimeType, httpStatus, httpStatusDescription);
+            WriteString(context, json, JsonHealthChecks.HealthChecksMimeType, true, httpStatus, httpStatusDescription);
         }
 
         private static void WritePong(HttpListenerContext context)
@@ -217,13 +217,13 @@ namespace Metrics.Visualization
 
         private static void WriteNotFound(HttpListenerContext context)
         {
-            WriteString(context, NotFoundResponse, "text/plain", 404, "NOT FOUND");
+            WriteString(context, NotFoundResponse, "text/plain", true, 404, "NOT FOUND");
         }
 
         private static void WritePrometheusMetrics(HttpListenerContext context, MetricsDataProvider metricsDataProvider, Func<HealthStatus> healthStatus)
         {
             var text = PrometheusReport.RenderMetrics(metricsDataProvider.CurrentMetricsData, healthStatus);
-            WriteString(context, text, "text/plain");
+            WriteString(context, text, "text/plain", false);
         }
 
         private static void WriteTextMetrics(HttpListenerContext context, MetricsDataProvider metricsDataProvider, Func<HealthStatus> healthStatus)
@@ -267,8 +267,10 @@ namespace Metrics.Visualization
         }
 
         private static void WriteString(HttpListenerContext context, string data, string contentType,
-            int httpStatus = 200, string httpStatusDescription = "OK")
+            bool utf8Encoding = true, int httpStatus = 200, string httpStatusDescription = "OK")
         {
+            Encoding encoding = utf8Encoding ? Encoding.UTF8 : Encoding.ASCII;
+
             AddCorsHeaders(context.Response);
             AddNoCacheHeaders(context.Response);
 
@@ -279,7 +281,7 @@ namespace Metrics.Visualization
             var acceptsGzip = AcceptsGzip(context.Request);
             if (!acceptsGzip)
             {
-                using (var writer = new StreamWriter(context.Response.OutputStream, Encoding.UTF8, 4096, true))
+                using (var writer = new StreamWriter(context.Response.OutputStream, encoding, 4096, true))
                 {
                     writer.Write(data);
                 }
@@ -288,7 +290,7 @@ namespace Metrics.Visualization
             {
                 context.Response.AddHeader("Content-Encoding", "gzip");
                 using (var gzip = new GZipStream(context.Response.OutputStream, CompressionMode.Compress, true))
-                using (var writer = new StreamWriter(gzip, Encoding.UTF8, 4096, true))
+                using (var writer = new StreamWriter(gzip, encoding, 4096, true))
                 {
                     writer.Write(data);
                 }

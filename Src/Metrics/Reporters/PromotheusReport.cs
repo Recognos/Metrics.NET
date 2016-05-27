@@ -2,6 +2,7 @@
 using System.Text.RegularExpressions;
 using Metrics.MetricData;
 using System.Threading;
+using System.Globalization;
 
 namespace Metrics.Reporters
 {
@@ -31,37 +32,39 @@ namespace Metrics.Reporters
 
         private void WriteMetric<T>(string type, string name, T value, Unit unit, MetricTags tags)
         {
-            reportText += string.Format("# TYPE gauge\n");
+            IFormatProvider culture = new CultureInfo("en-US");
+            reportText += string.Format(culture, "# TYPE {0} {1}\n", name, type);
+            string lowercased = name.ToLower();
 
             if (unit.Name.Equals(Unit.KiloBytes.Name))
             {
-                reportText += string.Format("{0}_in_kb {1} {2}\n", name, value, reportTime);
-                return;
+                reportText += string.Format(culture, "{0}_in_kb {1} {2}\n", lowercased, value, reportTime);
             }
-
-            if (unit.Name.Equals(Unit.MegaBytes.Name))
+            else if (unit.Name.Equals(Unit.MegaBytes.Name))
             {
-                reportText += string.Format("{0}_in_mb {1} {2}\n", name, value, reportTime);
-                return;
+                reportText += string.Format(culture, "{0}_in_mb {1} {2}\n", lowercased, value, reportTime);
             }
-
-            if (unit.Name.Equals(Unit.Percent))
+            else if (unit.Name.Equals(Unit.Percent))
             {
-                reportText += string.Format("{0}_pct {1} {2}\n", name, value, reportTime);
-                return;
+                reportText += string.Format(culture, "{0}_pct {1} {2}\n", lowercased, value, reportTime);
+            }
+            else
+            {
+                reportText += string.Format(culture, "{0} {1} {2}\n", lowercased, value, reportTime);
             }
 
-            reportText += string.Format("{0} {1} {2}\n", name, value, reportTime);
+            reportText += "\n";
+            return;
         }
 
         protected override void StartReport(string contextName)
         {
-            System.Console.WriteLine("StartReport: {0}", contextName);
+            // Do nothing
         }
 
         protected override void StartMetricGroup(string metricType)
         {
-            System.Console.WriteLine("StartMetricGroup: {0}", metricType);
+            // Do nothing
         }
 
         protected override void ReportGauge(string name, double value, Unit unit, MetricTags tags)
@@ -81,10 +84,12 @@ namespace Metrics.Reporters
 
         protected override void ReportHistogram(string name, HistogramValue value, Unit unit, MetricTags tags)
         {
+            // Do nothing -- not implemented YET, but we don't wanna crash the program
         }
 
         protected override void ReportTimer(string name, TimerValue value, Unit unit, TimeUnit rateUnit, TimeUnit durationUnit, MetricTags tags)
         {
+            // Do nothing -- not implemented YET, but we don't wanna crash the program
         }
 
         protected override void ReportHealth(HealthStatus status)
