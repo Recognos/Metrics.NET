@@ -74,22 +74,26 @@ namespace Metrics.Reporters
 
         protected override void ReportCounter(string name, CounterValue value, Unit unit, MetricTags tags)
         {
-            this.WriteMetric("counter", name, value.Count, unit, tags);
+            // Metrics.NET counters can be decremented, but Prometheus' are expected to be monotonically increasing
+            this.WriteMetric("gauge", name, value.Count, unit, tags);
         }
 
         protected override void ReportMeter(string name, MeterValue value, Unit unit, TimeUnit rateUnit, MetricTags tags)
         {
-            this.WriteMetric("counter", name, value.Count, unit, tags);
+            // Again, decreasing is a bad idea
+            this.WriteMetric("gauge", name, value.Count, unit, tags);
         }
 
         protected override void ReportHistogram(string name, HistogramValue value, Unit unit, MetricTags tags)
         {
-            // Do nothing -- not implemented YET, but we don't wanna crash the program
+            // The semantics between prometheus and Metrics.NET are different enough that we just want to pass a gauge
+            this.WriteMetric("gauge", name, value.Count, unit, tags);
         }
 
         protected override void ReportTimer(string name, TimerValue value, Unit unit, TimeUnit rateUnit, TimeUnit durationUnit, MetricTags tags)
         {
-            // Do nothing -- not implemented YET, but we don't wanna crash the program
+            // The semantics between prometheus and Metrics.NET are different enough that we just want to pass a gauge
+            this.WriteMetric("gauge", name, value.Histogram.Count, unit, tags);
         }
 
         protected override void ReportHealth(HealthStatus status)
