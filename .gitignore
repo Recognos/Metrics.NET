@@ -4,6 +4,10 @@ Docs
 Publishing/lib
 *.nupkg
 
+# Build-specific
+.nuget/
+.vs/
+
 # User-specific files
 *.suo
 *.user
