@@ -19,15 +19,7 @@ namespace Metrics.Reporters
         private long CurrentTimeMillis()
         {
             TimeSpan ts = base.CurrentContextTimestamp - epoch;
-            ts = ts.Duration(); // absolute value, for dates before Jan 1st, 1970
-            long total = ts.Days * 24 + ts.Hours; // total is in hours
-            total *= 60; // in minutes
-            total += ts.Minutes;
-            total *= 60; // in seconds
-            total += ts.Seconds;
-            total *= 1000; // in millis
-            total += ts.Milliseconds;
-            return base.CurrentContextTimestamp >= epoch ? total : -total; // all of this because ts.TotalMilliseconds is a double. *sigh*
+            return ts.Ticks / TimeSpan.TicksPerMillisecond;
         }
 
         private static Regex rgx = new Regex("[^a-z0-9A-Z:_]");
