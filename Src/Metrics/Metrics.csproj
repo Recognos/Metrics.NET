@@ -101,8 +101,17 @@
     <Compile Include="Graphite\GraphiteReport.cs" />
     <Compile Include="Graphite\GraphiteSender.cs" />
     <Compile Include="Graphite\UdpGraphiteSender.cs" />
+    <Compile Include="Influxdb\InfluxdbConfig.cs" />
     <Compile Include="Influxdb\InfluxdbConfigExtensions.cs" />
+    <Compile Include="Influxdb\InfluxdbHttpReport.cs" />
+    <Compile Include="Influxdb\InfluxdbJsonReport.cs" />
+    <Compile Include="Influxdb\InfluxdbConverter.cs" />
+    <Compile Include="Influxdb\InfluxdbFormatter.cs" />
+    <Compile Include="Influxdb\InfluxdbLineProtocol.cs" />
     <Compile Include="Influxdb\InfluxdbReport.cs" />
+    <Compile Include="Influxdb\InfluxdbWriter.cs" />
+    <Compile Include="Influxdb\InfluxModel.cs" />
+    <Compile Include="Influxdb\InfluxUtils.cs" />
     <Compile Include="Json\JsonMetric.cs" />
     <Compile Include="Json\JsonMetricsContext.cs" />
     <Compile Include="Json\JsonTimer.cs" />
