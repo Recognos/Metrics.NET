@@ -5,14 +5,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Metrics.Influxdb;
+using Metrics.Influxdb.Adapters;
+using Metrics.Influxdb.Model;
 
 namespace Metrics.Tests.Influxdb
 {
-	public class InfluxdbTestUtils
-	{
-
-	}
-
 	/// <summary>
 	/// Defines a test case for an <see cref="InfluxTag"/>.
 	/// </summary>

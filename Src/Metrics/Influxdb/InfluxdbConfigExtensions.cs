@@ -1,7 +1,9 @@
-﻿using Metrics.Influxdb;
+﻿using System;
+using Metrics.Influxdb;
 using Metrics.Reports;
-using System;
 using Metrics.MetricData;
+using Metrics.Influxdb.Model;
+using Metrics.Influxdb.Adapters;
 
 namespace Metrics
 {
@@ -14,6 +16,18 @@ namespace Metrics
 		#region MetricsReports Extensions
 
 		/// <summary>
+		/// Schedules the default <see cref="InfluxdbBaseReport"/> to be executed at a fixed interval. Uses the HTTP protocol by default.
+		/// </summary>
+		/// <param name="reports">The <see cref="MetricsReports"/> instance.</param>
+		/// <param name="config">The InfluxDB reporter configuration.</param>
+		/// <param name="interval">Interval at which to run the report.</param>
+		/// <param name="filter">Only report metrics that match the filter.</param> 
+		/// <returns>The <see cref="MetricsReports"/> instance.</returns>
+		public static MetricsReports WithInfluxDb(this MetricsReports reports, InfluxConfig config, TimeSpan interval, MetricsFilter filter = null) {
+			return reports.WithInfluxDbHttp(config, interval, filter);
+		}
+
+		/// <summary>
 		/// Schedules an <see cref="InfluxdbHttpReport"/> to be executed at a fixed interval.
 		/// </summary>
 		/// <param name="reports">The <see cref="MetricsReports"/> instance.</param>
@@ -23,7 +37,7 @@ namespace Metrics
 		/// <param name="filter">Only report metrics that match the filter.</param> 
 		/// <returns>The <see cref="MetricsReports"/> instance.</returns>
 		public static MetricsReports WithInfluxDbHttp(this MetricsReports reports, String host, String database, TimeSpan interval, MetricsFilter filter = null) {
-			return reports.WithInfluxDbHttp(new InfluxdbConfig(host, database), interval, filter);
+			return reports.WithInfluxDbHttp(new InfluxConfig(host, database), interval, filter);
 		}
 
 		/// <summary>
@@ -38,7 +52,7 @@ namespace Metrics
 		/// <param name="filter">Only report metrics that match the filter.</param> 
 		/// <returns>The <see cref="MetricsReports"/> instance.</returns>
 		public static MetricsReports WithInfluxDbHttp(this MetricsReports reports, String host, String database, String retentionPolicy, InfluxPrecision? precision, TimeSpan interval, MetricsFilter filter = null) {
-			return reports.WithInfluxDbHttp(new InfluxdbConfig(host, database, retentionPolicy, precision), interval, filter);
+			return reports.WithInfluxDbHttp(new InfluxConfig(host, database, retentionPolicy, precision), interval, filter);
 		}
 
 		/// <summary>
@@ -56,7 +70,7 @@ namespace Metrics
 		/// <param name="filter">Only report metrics that match the filter.</param> 
 		/// <returns>The <see cref="MetricsReports"/> instance.</returns>
 		public static MetricsReports WithInfluxDbHttp(this MetricsReports reports, String host, UInt16 port, String database, String username, String password, String retentionPolicy, InfluxPrecision? precision, TimeSpan interval, MetricsFilter filter = null) {
-			return reports.WithInfluxDbHttp(new InfluxdbConfig(host, port, database, username, password, retentionPolicy, precision), interval, filter);
+			return reports.WithInfluxDbHttp(new InfluxConfig(host, port, database, username, password, retentionPolicy, precision), interval, filter);
 		}
 
 		/// <summary>
@@ -68,7 +82,7 @@ namespace Metrics
 		/// <param name="filter">Only report metrics that match the filter.</param> 
 		/// <returns>The <see cref="MetricsReports"/> instance.</returns>
 		public static MetricsReports WithInfluxDbHttp(this MetricsReports reports, Uri influxdbUri, TimeSpan interval, MetricsFilter filter = null) {
-			return reports.WithInfluxDbHttp(new InfluxdbConfig(influxdbUri), interval, filter);
+			return reports.WithInfluxDbHttp(new InfluxConfig(influxdbUri), interval, filter);
 		}
 
 		/// <summary>
@@ -79,21 +93,21 @@ namespace Metrics
 		/// <param name="interval">Interval at which to run the report.</param>
 		/// <param name="filter">Only report metrics that match the filter.</param> 
 		/// <returns>The <see cref="MetricsReports"/> instance.</returns>
-		public static MetricsReports WithInfluxDbHttp(this MetricsReports reports, InfluxdbConfig config, TimeSpan interval, MetricsFilter filter = null) {
+		public static MetricsReports WithInfluxDbHttp(this MetricsReports reports, InfluxConfig config, TimeSpan interval, MetricsFilter filter = null) {
 			return reports.WithReport(new InfluxdbHttpReport(config), interval, filter);
 		}
 
 		#endregion
 
-		#region InfluxdbConfig Configuration Extensions
+		#region InfluxConfig Configuration Extensions
 
 		/// <summary>
 		/// Sets the Writer on the InfluxDB reporter configuration and returns the same instance.
 		/// </summary>
 		/// <param name="config">The InfluxDB reporter configuration.</param>
 		/// <param name="writer">The InfluxDB metric writer.</param>
-		/// <returns>This <see cref="InfluxdbConfig"/> instance.</returns>
-		public static InfluxdbConfig WithWriter(this InfluxdbConfig config, InfluxdbWriter writer) {
+		/// <returns>This <see cref="InfluxConfig"/> instance.</returns>
+		public static InfluxConfig WithWriter(this InfluxConfig config, InfluxdbWriter writer) {
 			config.Writer = writer;
 			return config;
 		}
@@ -103,8 +117,8 @@ namespace Metrics
 		/// </summary>
 		/// <param name="config">The InfluxDB reporter configuration.</param>
 		/// <param name="converter">The InfluxDB metric converter.</param>
-		/// <returns>This <see cref="InfluxdbConfig"/> instance.</returns>
-		public static InfluxdbConfig WithConverter(this InfluxdbConfig config, InfluxdbConverter converter) {
+		/// <returns>This <see cref="InfluxConfig"/> instance.</returns>
+		public static InfluxConfig WithConverter(this InfluxConfig config, InfluxdbConverter converter) {
 			config.Converter = converter;
 			return config;
 		}
@@ -114,8 +128,8 @@ namespace Metrics
 		/// </summary>
 		/// <param name="config">The InfluxDB reporter configuration.</param>
 		/// <param name="formatter">The InfluxDB metric formatter.</param>
-		/// <returns>This <see cref="InfluxdbConfig"/> instance.</returns>
-		public static InfluxdbConfig WithFormatter(this InfluxdbConfig config, InfluxdbFormatter formatter) {
+		/// <returns>This <see cref="InfluxConfig"/> instance.</returns>
+		public static InfluxConfig WithFormatter(this InfluxConfig config, InfluxdbFormatter formatter) {
 			config.Formatter = formatter;
 			return config;
 		}
@@ -163,7 +177,7 @@ namespace Metrics
 
 		#endregion
 
-		#region InfluxdbMetricFormatter Configuration Extensions
+		#region InfluxdbFormatter Configuration Extensions
 
 		/// <summary>
 		/// Sets the ContextNameFormatter on this instance to the specified value and returns this <see cref="InfluxdbFormatter"/> instance.
@@ -215,16 +229,18 @@ namespace Metrics
 		#region Deprecated Config Extensions
 
 		// old config extensions
-		private const String jsonObsoleteMsg = "The old format uses JSON over HTTP which was deprecated in InfluxDB v0.9.1. See for more information: https://docs.influxdata.com/influxdb/v0.13/write_protocols/json/";
+		public const String JsonObsoleteMsg = "The old format uses JSON over HTTP which was deprecated in InfluxDB v0.9.1. See for more information: https://docs.influxdata.com/influxdb/v0.13/write_protocols/json/";
 
-		[Obsolete(jsonObsoleteMsg)]
-		public static MetricsReports WithInfluxDb(this MetricsReports reports, string host, int port, string user, string pass, string database, TimeSpan interval) {
-			return reports.WithInfluxDb(new Uri($@"http://{host}:{port}/db/{database}/series?u={user}&p={pass}&time_precision=s"), interval);
+		[Obsolete(JsonObsoleteMsg)]
+		public static MetricsReports WithInfluxDb(this MetricsReports reports, String host, UInt16 port, String user, String pass, String database, TimeSpan interval, MetricsFilter filter = null) {
+			var config = new InfluxConfig(host, port, database, user, pass, null, InfluxPrecision.Seconds);
+			return reports.WithReport(new InfluxdbJsonReport(config), interval, filter);
+			//return reports.WithInfluxDb(new Uri($@"http://{host}:{port}/db/{database}/series?u={user}&p={pass}&time_precision=s"), interval);
 		}
 
-		[Obsolete(jsonObsoleteMsg)]
+		[Obsolete(JsonObsoleteMsg)]
 		public static MetricsReports WithInfluxDb(this MetricsReports reports, Uri influxdbUri, TimeSpan interval) {
-			return reports.WithReport(new InfluxdbReport(influxdbUri), interval);
+			return reports.WithReport(new InfluxdbJsonReport(influxdbUri), interval);
 		}
 
 		#endregion

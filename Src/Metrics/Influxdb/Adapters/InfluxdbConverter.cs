@@ -1,16 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Metrics.MetricData;
+using Metrics.Influxdb.Model;
+using System.Text.RegularExpressions;
 
-namespace Metrics.Influxdb
+namespace Metrics.Influxdb.Adapters
 {
 	/// <summary>
-	/// This class converts metric values into <see cref="InfluxRecord"/> objects.
+	/// This class converts Metrics.NET metric values into <see cref="InfluxRecord"/> objects.
 	/// </summary>
-	public class InfluxdbConverter
+	public abstract class InfluxdbConverter
 	{
 
 		/// <summary>
@@ -30,20 +30,20 @@ namespace Metrics.Influxdb
 
 
 		/// <summary>
-		/// Creates a new <see cref="InfluxdbConverter"/> using the default precision defined by <see cref="InfluxdbConfig.Default.Precision"/>.
+		/// Creates a new <see cref="InfluxdbConverter"/> using the default precision defined by <see cref="InfluxConfig.Default.Precision"/>.
 		/// </summary>
 		public InfluxdbConverter()
 			: this(null) {
 		}
 
 		/// <summary>
-		/// Creates a new <see cref="InfluxdbConverter"/> using the specified precision.
+		/// Creates a new <see cref="InfluxdbConverter"/> using the specified precision and tags.
 		/// </summary>
 		/// <param name="precision">The timestamp precision to use when creating new records. If this is null,
-		/// the default precision defined by <see cref="InfluxdbConfig.Default.Precision"/> is used.</param>
+		/// the default precision defined by <see cref="InfluxConfig.Default.Precision"/> is used.</param>
 		/// <param name="globalTags">The global tags that are added to all created <see cref="InfluxRecord"/> instances.</param>
 		public InfluxdbConverter(InfluxPrecision? precision, MetricTags? globalTags = null) {
-			Precision = precision ?? InfluxdbConfig.Default.Precision;
+			Precision = precision ?? InfluxConfig.Default.Precision;
 			GlobalTags = globalTags ?? MetricTags.None;
 		}
 
@@ -207,10 +207,14 @@ namespace Metrics.Influxdb
 		/// <returns></returns>
 		public IEnumerable<InfluxRecord> GetRecords(HealthStatus status) {
 			foreach (var result in status.Results) {
-				var name = InfluxUtils.LowerAndReplaceSpaces(result.Name);
-				yield return GetRecord("Health Checks", $"Name={name}", new[] {
+				//var name = InfluxUtils.LowerAndReplaceSpaces(result.Name);
+				//var nameWithTags = Regex.IsMatch(result.Name, "^[Nn]ame=") ? result.Name : $"Name={result.Name}";
+				var split = Regex.Split(result.Name, @"(?<!\\)[,]").Select(t => t.Trim()).Where(t => t.Length > 0).ToArray();
+				if (!Regex.IsMatch(split[0], "^[Nn]ame=")) split[0] = $"Name={InfluxUtils.LowerAndReplaceSpaces(split[0])}";
+				var name = String.Join(",", split);
+				yield return GetRecord("Health Checks", name, new[] {
 					new InfluxField("IsHealthy", result.Check.IsHealthy),
-					new InfluxField("Message", result.Check.Message),
+					new InfluxField("Message",   result.Check.Message),
 				});
 			}
 		}
@@ -242,6 +246,19 @@ namespace Metrics.Influxdb
 			var jtags = InfluxUtils.JoinTags(itemName, GlobalTags, tags); // global tags must be first so they can get overridden
 			var record = new InfluxRecord(name, jtags, fields, Timestamp, Precision);
 			return record;
+		}
+	}
+
+	public class DefaultConverter : InfluxdbConverter
+	{
+		/// <summary>
+		/// Creates a new <see cref="DefaultConverter"/> using the specified precision and tags.
+		/// </summary>
+		/// <param name="precision">The timestamp precision to use when creating new records. If this is null,
+		/// the default precision defined by <see cref="InfluxConfig.Default.Precision"/> is used.</param>
+		/// <param name="globalTags">The global tags that are added to all created <see cref="InfluxRecord"/> instances.</param>
+		public DefaultConverter(InfluxPrecision? precision = null, MetricTags? globalTags = null)
+			: base(precision, globalTags) {
 		}
 	}
 }

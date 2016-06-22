@@ -1,19 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Metrics.MetricData;
+using Metrics.Influxdb.Model;
 
-namespace Metrics.Influxdb
+namespace Metrics.Influxdb.Adapters
 {
 	/// <summary>
 	/// This class provides functions to format the context name and metric
 	/// name into a string used to identify the table to insert records into.
 	/// The formatter is also used to format the <see cref="InfluxRecord"/>
-	/// before writing it to the database.
+	/// before writing it to the database. This also optionally formats the column
+	/// names by converting the case and replacing spaces with another character.
 	/// </summary>
-	public class InfluxdbFormatter
+	public abstract class InfluxdbFormatter
 	{
 
 		public delegate String ContextFormatterDelegate(IEnumerable<String> contextStack, String contextName);
@@ -48,7 +47,6 @@ namespace Metrics.Influxdb
 		/// </summary>
 		public String ReplaceSpaceChar { get; set; }
 
-
 		/// <summary>
 		/// If set to true will convert all context names, metric names, tag keys, and field keys 
 		/// to lowercase. If false, it does not modify the names. The default value is true.
@@ -57,71 +55,14 @@ namespace Metrics.Influxdb
 
 
 		/// <summary>
-		/// Default InfluxDB formatters and settings.
-		/// </summary>
-		public static class Default
-		{
-			/// <summary>
-			/// The default context name formatter which formats the context stack and context name into a custom context name string.
-			/// </summary>
-			public static ContextFormatterDelegate ContextNameFormatter { get; }
-
-			/// <summary>
-			/// The default metric name formatter which formats the context name and metric into a string used as the table to insert records into.
-			/// </summary>
-			public static MetricFormatterDelegate MetricNameFormatter { get; }
-
-			/// <summary>
-			/// The default tag key formatter which formats a tag key into a string used as the column name in the InfluxDB table.
-			/// </summary>
-			public static TagKeyFormatterDelegate TagKeyFormatter { get; }
-
-			/// <summary>
-			/// The default field key formatter which formats a field key into a string used as the column name in the InfluxDB table.
-			/// </summary>
-			public static FieldKeyFormatterDelegate FieldKeyFormatter { get; }
-
-			/// <summary>
-			/// The default character used to replace space characters in identifier names. This value is an underscore.
-			/// </summary>
-			public static String ReplaceSpaceChar { get; set; }
-
-			/// <summary>
-			/// The default value for whether to convert identifier names to lowercase. This value is true.
-			/// </summary>
-			public static Boolean LowercaseNames { get; }
-
-			static Default() {
-				//ContextNameFormatter = (contextStack, contextName) => InfluxUtils.LowerAndReplaceSpaces(String.Join(".", (contextStack ?? new String[0]).Concat(new[] { contextName }).Where(c => !String.IsNullOrWhiteSpace(c))));
-				//MetricNameFormatter  = (context, name, unit, tags) => InfluxUtils.LowerAndReplaceSpaces($"{context}.{name}").Trim('.');
-				//TagKeyFormatter      = key => InfluxUtils.LowerAndReplaceSpaces(key);
-				//FieldKeyFormatter    = key => InfluxUtils.LowerAndReplaceSpaces(key);
-				ContextNameFormatter = (contextStack, contextName) => String.Join(".", (contextStack ?? new String[0]).Concat(new[] { contextName }).Where(c => !String.IsNullOrWhiteSpace(c)));
-				MetricNameFormatter  = (context, name, unit, tags) => $"{context}.{name}".Trim(' ', '.');
-				TagKeyFormatter      = key => key;
-				FieldKeyFormatter    = key => key;
-				ReplaceSpaceChar     = "_";
-				LowercaseNames       = true;
-			}
-		}
-
-
-
-		/// <summary>
 		/// Creates a new <see cref="InfluxdbFormatter"/> with default values.
 		/// The default formatters convert identifiers to lowercase, replace spaces with underscores, and if applicable, join multiple identifiers with periods.
 		/// </summary>
 		public InfluxdbFormatter() {
-			ContextNameFormatter = Default.ContextNameFormatter;
-			MetricNameFormatter  = Default.MetricNameFormatter;
-			TagKeyFormatter      = Default.TagKeyFormatter;
-			FieldKeyFormatter    = Default.FieldKeyFormatter;
-			ReplaceSpaceChar     = Default.ReplaceSpaceChar;
-			LowercaseNames       = Default.LowercaseNames;
 		}
 
 		/// <summary>
-		/// Creates a new <see cref="InfluxdbFormatter"/> with default values, including the <see cref="LowercaseNames"/> and <see cref="ReplaceSpaceChar"/> properties..
+		/// Creates a new <see cref="InfluxdbFormatter"/> with default values, including the <see cref="LowercaseNames"/> and <see cref="ReplaceSpaceChar"/> properties.
 		/// The default formatters convert identifiers to lowercase, replace spaces with underscores, and if applicable, join multiple identifiers with periods.
 		/// </summary>
 		/// <param name="lowercase">If true, converts the string to lowercase.</param>
@@ -131,6 +72,7 @@ namespace Metrics.Influxdb
 			LowercaseNames   = lowercase;
 			ReplaceSpaceChar = replaceChars;
 		}
+
 
 		/// <summary>
 		/// Formats the context name using the <see cref="ContextNameFormatter"/> if it is set, otherwise returns null.
@@ -190,7 +132,7 @@ namespace Metrics.Influxdb
 		/// <returns>The same <see cref="InfluxRecord"/> instance with the tag and field keys formatted.</returns>
 		public virtual InfluxRecord FormatRecord(InfluxRecord record) {
 			if (MetricNameFormatter != null)
-				record.Name = MetricNameFormatter(null, record.Name, Unit.None, null);
+				record.Name = FormatMetricName(null, record.Name, Unit.None, null) ?? record.Name;
 
 			if (TagKeyFormatter != null) {
 				for (int i = 0; i < record.Tags.Count; i++) {
@@ -211,5 +153,79 @@ namespace Metrics.Influxdb
 			return record;
 		}
 
+	}
+
+	public class DefaultFormatter : InfluxdbFormatter
+	{
+		/// <summary>
+		/// Default InfluxDB formatters and settings.
+		/// </summary>
+		public static class Default
+		{
+			/// <summary>
+			/// The default context name formatter which formats the context stack and context name into a custom context name string.
+			/// </summary>
+			public static ContextFormatterDelegate ContextNameFormatter { get; }
+
+			/// <summary>
+			/// The default metric name formatter which formats the context name and metric into a string used as the table to insert records into.
+			/// </summary>
+			public static MetricFormatterDelegate MetricNameFormatter { get; }
+
+			/// <summary>
+			/// The default tag key formatter which formats a tag key into a string used as the column name in the InfluxDB table.
+			/// </summary>
+			public static TagKeyFormatterDelegate TagKeyFormatter { get; }
+
+			/// <summary>
+			/// The default field key formatter which formats a field key into a string used as the column name in the InfluxDB table.
+			/// </summary>
+			public static FieldKeyFormatterDelegate FieldKeyFormatter { get; }
+
+			/// <summary>
+			/// The default character used to replace space characters in identifier names. This value is an underscore.
+			/// </summary>
+			public static String ReplaceSpaceChar { get; set; }
+
+			/// <summary>
+			/// The default value for whether to convert identifier names to lowercase. This value is true.
+			/// </summary>
+			public static Boolean LowercaseNames { get; }
+
+			static Default() {
+				ContextNameFormatter = (contextStack, contextName) => String.Join(".", (contextStack ?? new String[0]).Concat(new[] { contextName }).Where(c => !String.IsNullOrWhiteSpace(c)));
+				MetricNameFormatter  = (context, name, unit, tags) => $"{context}.{name}".Trim(' ', '.');
+				TagKeyFormatter      = key => key;
+				FieldKeyFormatter    = key => key;
+				ReplaceSpaceChar     = "_";
+				LowercaseNames       = true;
+			}
+		}
+
+		/// <summary>
+		/// Creates a new <see cref="InfluxdbFormatter"/> with default values.
+		/// The default formatters convert identifiers to lowercase, replace spaces with underscores, and if applicable, join multiple identifiers with periods.
+		/// </summary>
+		public DefaultFormatter()
+			: base() {
+			ContextNameFormatter = Default.ContextNameFormatter;
+			MetricNameFormatter  = Default.MetricNameFormatter;
+			TagKeyFormatter      = Default.TagKeyFormatter;
+			FieldKeyFormatter    = Default.FieldKeyFormatter;
+			ReplaceSpaceChar     = Default.ReplaceSpaceChar;
+			LowercaseNames       = Default.LowercaseNames;
+		}
+
+		/// <summary>
+		/// Creates a new <see cref="InfluxdbFormatter"/> with default values, including the <see cref="LowercaseNames"/> and <see cref="ReplaceSpaceChar"/> properties.
+		/// The default formatters convert identifiers to lowercase, replace spaces with underscores, and if applicable, join multiple identifiers with periods.
+		/// </summary>
+		/// <param name="lowercase">If true, converts the string to lowercase.</param>
+		/// <param name="replaceChars">The character(s) to replace all space characters with (underscore by default). If null, spaces are not replaced.</param>
+		public DefaultFormatter(Boolean lowercase, String replaceChars)
+			: this() {
+			LowercaseNames   = lowercase;
+			ReplaceSpaceChar = replaceChars;
+		}
 	}
 }

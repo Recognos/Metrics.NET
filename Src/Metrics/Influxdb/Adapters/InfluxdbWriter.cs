@@ -1,14 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
 using System.Linq;
-using System.Net;
 using System.Text;
-using System.Threading.Tasks;
 using Metrics.Logging;
+using Metrics.Influxdb.Model;
 
-namespace Metrics.Influxdb
+namespace Metrics.Influxdb.Adapters
 {
 	/// <summary>
 	/// The <see cref="InfluxdbWriter"/> is responsible for writing <see cref="InfluxRecord"/>s to the InfluxDB server.
@@ -118,14 +115,11 @@ namespace Metrics.Influxdb
 	public abstract class InfluxdbLineWriter : InfluxdbWriter
 	{
 
-		private static readonly ILog log = LogProvider.GetCurrentClassLogger();
-
-
 		/// <summary>
 		/// Creates a new <see cref="InfluxdbLineWriter"/>.
 		/// </summary>
-		public InfluxdbLineWriter()
-			: base() {
+		public InfluxdbLineWriter(Int32 batchSize = 0)
+			: base(batchSize) {
 		}
 
 
@@ -156,49 +150,5 @@ namespace Metrics.Influxdb
 		/// <returns>The response from the server after writing the message, or null if there is no response (like for UDP).</returns>
 		protected abstract Byte[] WriteToTransport(Byte[] bytes);
 
-	}
-
-
-	/// <summary>
-	/// This class writes <see cref="InfluxRecord"/>s formatted in the LineProtocol to the InfluxDB server using HTTP POST.
-	/// </summary>
-	public class InfluxdbHttpWriter : InfluxdbLineWriter
-	{
-
-		protected readonly Uri influxDbUri;
-
-
-		/// <summary>
-		/// Creates a new <see cref="InfluxdbHttpWriter"/> with the specified URI.
-		/// </summary>
-		/// <param name="influxDbUri">The HTTP URI of the InfluxDB server.</param>
-		public InfluxdbHttpWriter(Uri influxDbUri)
-			: base() {
-			if (influxDbUri == null)
-				throw new ArgumentNullException(nameof(influxDbUri));
-			if (influxDbUri.Scheme != Uri.UriSchemeHttp && influxDbUri.Scheme != Uri.UriSchemeHttps)
-				throw new ArgumentException($"The URI scheme must be either http or https. Scheme: {influxDbUri.Scheme}", nameof(influxDbUri));
-
-			this.influxDbUri = influxDbUri;
-		}
-
-
-		/// <summary>
-		/// Writes the byte array to the InfluxDB server in a single HTTP POST operation.
-		/// </summary>
-		/// <param name="bytes">The bytes to write to the InfluxDB server.</param>
-		/// <returns>The HTTP response from the server after writing the message.</returns>
-		protected override Byte[] WriteToTransport(Byte[] bytes) {
-			try {
-				using (var client = new WebClient()) {
-					var result = client.UploadData(influxDbUri, bytes);
-					return result;
-				}
-			} catch (WebException ex) {
-				String response = new StreamReader(ex.Response.GetResponseStream()).ReadToEnd();
-				MetricsErrorHandler.Handle(ex, $"Error while uploading {Batch.Count} measurements to InfluxDB over HTTP [{influxDbUri}] [ResponseStatus: {ex.Status}]: {response}");
-				return Encoding.UTF8.GetBytes(response);
-			}
-		}
 	}
 }

@@ -1,15 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Metrics.Influxdb.Adapters;
 
-namespace Metrics.Influxdb
+namespace Metrics.Influxdb.Model
 {
 	/// <summary>
-	/// Configuration for using InfluxDB reporting.
+	/// Configuration for the InfluxDB reporter.
 	/// </summary>
-	public class InfluxdbConfig
+	public class InfluxConfig
 	{
 
 		#region Default Values
@@ -86,7 +84,9 @@ namespace Metrics.Influxdb
 		public InfluxdbConverter Converter { get; set; }
 
 		/// <summary>
-		/// The <see cref="InfluxdbFormatter"/> is used to format the context and metric names into a string which is used as the table name to insert <see cref="InfluxRecord"/>s into.
+		/// The <see cref="InfluxdbFormatter"/> is used to format the context and metric names into strings
+		/// which are used as the table name to insert <see cref="InfluxRecord"/>s into. This also optionally
+		/// formats the column names by converting the case and replacing spaces with another character.
 		/// </summary>
 		public InfluxdbFormatter Formatter { get; set; }
 
@@ -102,7 +102,7 @@ namespace Metrics.Influxdb
 		/// <summary>
 		/// Creates a new InfluxDB configuration object with default values.
 		/// </summary>
-		public InfluxdbConfig() 
+		public InfluxConfig() 
 			: this(null, null) {
 		}
 
@@ -111,7 +111,7 @@ namespace Metrics.Influxdb
 		/// </summary>
 		/// <param name="host">The hostname or IP address of the InfluxDB server.</param>
 		/// <param name="database">The database name to write values to. This should be null if using UDP since the database is defined in the UDP endpoint configuration on the InfluxDB server.</param>
-		public InfluxdbConfig(String host, String database)
+		public InfluxConfig(String host, String database)
 			: this(host, null, database) {
 		}
 
@@ -121,7 +121,7 @@ namespace Metrics.Influxdb
 		/// <param name="host">The hostname or IP address of the InfluxDB server.</param>
 		/// <param name="port">The port number to connect to on the InfluxDB server, or null to use the default port number.</param>
 		/// <param name="precision">The precision of the timestamp value in the line protocol syntax.</param>
-		public InfluxdbConfig(String host, String database, InfluxPrecision? precision)
+		public InfluxConfig(String host, String database, InfluxPrecision? precision)
 			: this(host, null, database, null, precision) {
 		}
 
@@ -132,7 +132,7 @@ namespace Metrics.Influxdb
 		/// <param name="database">The database name to write values to. This should be null if using UDP since the database is defined in the UDP endpoint configuration on the InfluxDB server.</param>
 		/// <param name="retentionPolicy">The retention policy to use when writing datapoints to the InfluxDB database, or null to use the database's default retention policy.</param>
 		/// <param name="precision">The precision of the timestamp value in the line protocol syntax.</param>
-		public InfluxdbConfig(String host, String database, String retentionPolicy, InfluxPrecision? precision)
+		public InfluxConfig(String host, String database, String retentionPolicy, InfluxPrecision? precision)
 			: this(host, null, database, retentionPolicy, precision) {
 		}
 
@@ -142,7 +142,7 @@ namespace Metrics.Influxdb
 		/// <param name="host">The hostname or IP address of the InfluxDB server.</param>
 		/// <param name="port">The port number to connect to on the InfluxDB server, or null to use the default port number.</param>
 		/// <param name="database">The database name to write values to. This should be null if using UDP since the database is defined in the UDP endpoint configuration on the InfluxDB server.</param>
-		public InfluxdbConfig(String host, UInt16? port, String database)
+		public InfluxConfig(String host, UInt16? port, String database)
 			: this(host, port, database, null, null) {
 		}
 
@@ -154,7 +154,7 @@ namespace Metrics.Influxdb
 		/// <param name="database">The database name to write values to. This should be null if using UDP since the database is defined in the UDP endpoint configuration on the InfluxDB server.</param>
 		/// <param name="retentionPolicy">The retention policy to use when writing datapoints to the InfluxDB database, or null to use the database's default retention policy.</param>
 		/// <param name="precision">The precision of the timestamp value in the line protocol syntax.</param>
-		public InfluxdbConfig(String host, UInt16? port, String database, String retentionPolicy, InfluxPrecision? precision)
+		public InfluxConfig(String host, UInt16? port, String database, String retentionPolicy, InfluxPrecision? precision)
 			: this(host, port, database, null, null, retentionPolicy, precision) {
 		}
 
@@ -168,7 +168,7 @@ namespace Metrics.Influxdb
 		/// <param name="password">The password to use to connect to the InfluxDB server, or null if authentication is not used.</param>
 		/// <param name="retentionPolicy">The retention policy to use when writing datapoints to the InfluxDB database, or null to use the database's default retention policy.</param>
 		/// <param name="precision">The precision of the timestamp value in the line protocol syntax.</param>
-		public InfluxdbConfig(String host, UInt16? port, String database, String username, String password, String retentionPolicy, InfluxPrecision? precision) {
+		public InfluxConfig(String host, UInt16? port, String database, String username, String password, String retentionPolicy, InfluxPrecision? precision) {
 			this.Hostname = host;
 			this.Port = port;
 			this.Database = database;
@@ -182,10 +182,9 @@ namespace Metrics.Influxdb
 		/// Creates a new InfluxDB configuration object with values initialized from the URI.
 		/// </summary>
 		/// <param name="influxDbUri">The URI of the InfluxDB server, including any query string parameters.</param>
-		public InfluxdbConfig(Uri influxDbUri) {
+		public InfluxConfig(Uri influxDbUri) {
 			if (influxDbUri == null)
 				throw new ArgumentNullException(nameof(influxDbUri));
-
 			Hostname = influxDbUri.Host;
 			Port = (UInt16)influxDbUri.Port;
 			var queryKvps = influxDbUri.ParseQueryString();

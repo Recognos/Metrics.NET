@@ -9,6 +9,7 @@ using Xunit;
 using FluentAssertions;
 using Metrics.Utils;
 using System.Threading;
+using Metrics.Influxdb.Model;
 
 namespace Metrics.Tests.Influxdb
 {
@@ -156,10 +157,10 @@ namespace Metrics.Tests.Influxdb
 		[Fact]
 		public void InfluxReport_CanAddRecords_ForGauge() {
 			var writer = new InfluxdbTestWriter();
-			var config = new InfluxdbConfig("localhost", "testdb") { Writer = writer };
+			var config = new InfluxConfig("localhost", "testdb") { Writer = writer };
 			var report = new InfluxdbHttpReport(config);
 			var context = new DefaultMetricsContext("TestContext");
-			var precision = config.Precision ?? InfluxdbConfig.Default.Precision;
+			var precision = config.Precision ?? InfluxConfig.Default.Precision;
 			var metricsData = context.DataProvider.CurrentMetricsData;
 
 			report.RunReport(metricsData, hsFunc, CancellationToken.None);
@@ -177,10 +178,10 @@ namespace Metrics.Tests.Influxdb
 		[Fact]
 		public void InfluxReport_CanAddRecords_ForCounter() {
 			var writer = new InfluxdbTestWriter();
-			var config = new InfluxdbConfig("localhost", "testdb") { Writer = writer };
+			var config = new InfluxConfig("localhost", "testdb") { Writer = writer };
 			var report = new InfluxdbHttpReport(config);
 			var context = new DefaultMetricsContext("TestContext");
-			var precision = config.Precision ?? InfluxdbConfig.Default.Precision;
+			var precision = config.Precision ?? InfluxConfig.Default.Precision;
 			var metricsData = context.DataProvider.CurrentMetricsData;
 			var counter = context.Counter("test_counter", Unit.Bytes, new MetricTags("key1=value1,tag2,tag3,key4=value4"));
 
@@ -207,10 +208,10 @@ namespace Metrics.Tests.Influxdb
 		[Fact]
 		public void InfluxReport_CanAddRecords_ForMeter() {
 			var writer = new InfluxdbTestWriter();
-			var config = new InfluxdbConfig("localhost", "testdb") { Writer = writer };
+			var config = new InfluxConfig("localhost", "testdb") { Writer = writer };
 			var report = new InfluxdbHttpReport(config);
 			var context = new DefaultMetricsContext("TestContext");
-			var precision = config.Precision ?? InfluxdbConfig.Default.Precision;
+			var precision = config.Precision ?? InfluxConfig.Default.Precision;
 			var metricsData = context.DataProvider.CurrentMetricsData;
 			var meter = context.Meter("test_meter", Unit.Bytes, TimeUnit.Seconds, new MetricTags("key1=value1,tag2,tag3,key4=value4"));
 
@@ -237,10 +238,10 @@ namespace Metrics.Tests.Influxdb
 		[Fact]
 		public void InfluxReport_CanAddRecords_ForHistogram() {
 			var writer = new InfluxdbTestWriter();
-			var config = new InfluxdbConfig("localhost", "testdb") { Writer = writer };
+			var config = new InfluxConfig("localhost", "testdb") { Writer = writer };
 			var report = new InfluxdbHttpReport(config);
 			var context = new DefaultMetricsContext("TestContext");
-			var precision = config.Precision ?? InfluxdbConfig.Default.Precision;
+			var precision = config.Precision ?? InfluxConfig.Default.Precision;
 			var metricsData = context.DataProvider.CurrentMetricsData;
 			var hist = context.Histogram("test_hist", Unit.Bytes, SamplingType.Default, new MetricTags("key1=value1,tag2,tag3,key4=value4"));
 
@@ -266,10 +267,10 @@ namespace Metrics.Tests.Influxdb
 		[Fact]
 		public void InfluxReport_CanAddRecords_ForTimer() {
 			var writer = new InfluxdbTestWriter();
-			var config = new InfluxdbConfig("localhost", "testdb") { Writer = writer };
+			var config = new InfluxConfig("localhost", "testdb") { Writer = writer };
 			var report = new InfluxdbHttpReport(config);
 			var context = new DefaultMetricsContext("TestContext");
-			var precision = config.Precision ?? InfluxdbConfig.Default.Precision;
+			var precision = config.Precision ?? InfluxConfig.Default.Precision;
 			var metricsData = context.DataProvider.CurrentMetricsData;
 			var timer = context.Timer("test_timer", Unit.Bytes, SamplingType.Default, TimeUnit.Seconds, TimeUnit.Seconds, new MetricTags("key1=value1,tag2,tag3,key4=value4"));
 
@@ -292,9 +293,33 @@ namespace Metrics.Tests.Influxdb
 			writer.LastBatch[0].ToLineProtocol().Should().StartWith($@"testcontext.test_timer,key1=value1,key4=value4 active_sessions=0i,total_time=150i,count=2i,").And.EndWith($@",1_min_rate=0,5_min_rate=0,15_min_rate=0,last=50,min=50,mean=75,max=100,stddev=25,median=100,sample_size=2i,percentile_75%=100,percentile_95%=100,percentile_98%=100,percentile_99%=100,percentile_99.9%=100 {expTime}");
 		}
 
-
+		[Fact]
 		public void InfluxReport_CanAddRecords_ForHealthCheck() {
+			var writer = new InfluxdbTestWriter();
+			var config = new InfluxConfig("localhost", "testdb") { Writer = writer };
+			var report = new InfluxdbHttpReport(config);
+			var context = new DefaultMetricsContext("TestContext");
+			var precision = config.Precision ?? InfluxConfig.Default.Precision;
+			var metricsData = context.DataProvider.CurrentMetricsData;
 
+			HealthChecks.UnregisterAllHealthChecks();
+			HealthChecks.RegisterHealthCheck("Health Check 1", () => HealthCheckResult.Healthy($"Healthy check!"));
+			HealthChecks.RegisterHealthCheck("Health Check 2", () => HealthCheckResult.Unhealthy($"Unhealthy check!"));
+			HealthChecks.RegisterHealthCheck("Health Check 3,tag3=key3",      () => HealthCheckResult.Healthy($"Healthy check!"));
+			HealthChecks.RegisterHealthCheck("Health Check 4,tag 4=key 4",    () => HealthCheckResult.Healthy($"Healthy check!"));
+			HealthChecks.RegisterHealthCheck("Name=Health Check 5,tag5=key5", () => HealthCheckResult.Healthy($"Healthy check!"));
+
+			metricsData = context.DataProvider.CurrentMetricsData;
+			report.RunReport(metricsData, () => HealthChecks.GetStatus(), CancellationToken.None);
+			HealthChecks.UnregisterAllHealthChecks(); // unreg first in case something below throws
+			writer.LastBatch.Should().HaveCount(5);
+
+			var expTime = InfluxdbLineProtocol.FormatTimestamp(metricsData.Timestamp, precision);
+			writer.LastBatch[0].ToLineProtocol().Should().Be($@"health_checks,name=health_check_1 ishealthy=True,message=""Healthy check!"" {expTime}");
+			writer.LastBatch[1].ToLineProtocol().Should().Be($@"health_checks,name=health_check_2 ishealthy=False,message=""Unhealthy check!"" {expTime}");
+			writer.LastBatch[2].ToLineProtocol().Should().Be($@"health_checks,name=health_check_3,tag3=key3 ishealthy=True,message=""Healthy check!"" {expTime}");
+			writer.LastBatch[3].ToLineProtocol().Should().Be($@"health_checks,name=health_check_4,tag_4=key\ 4 ishealthy=True,message=""Healthy check!"" {expTime}");
+			writer.LastBatch[4].ToLineProtocol().Should().Be($@"health_checks,name=health\ check\ 5,tag5=key5 ishealthy=True,message=""Healthy check!"" {expTime}");
 		}
 
 

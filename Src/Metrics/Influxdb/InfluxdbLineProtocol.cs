@@ -1,9 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+using Metrics.Influxdb.Model;
 
 namespace Metrics.Influxdb
 {
@@ -83,15 +82,15 @@ namespace Metrics.Influxdb
 		#region Format Field Values
 
 		/// <summary>
-		/// Formats the value in the appropriate line protocol format based on the type of the value object.
+		/// Formats the field value in the appropriate line protocol format based on the type of the value object.
 		/// The value type must be a string, boolean, or integral or floating-point type.
 		/// </summary>
-		/// <param name="value">The value to format.</param>
-		/// <returns>The value formatted as a string used in the line protocol format.</returns>
+		/// <param name="value">The field value to format.</param>
+		/// <returns>The field value formatted as a string used in the line protocol format.</returns>
 		public static String FormatValue(Object value) {
+			Type type = value?.GetType();
 			if (value == null)
 				throw new ArgumentNullException(nameof(value));
-			Type type = value.GetType();
 			if (!InfluxUtils.IsValidValueType(type))
 				throw new ArgumentException(nameof(value), $"Value is not one of the supported types: {type} - Valid types: {String.Join(", ", InfluxUtils.ValidValueTypes.Select(t => t.Name))}");
 
