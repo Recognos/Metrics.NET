@@ -127,10 +127,11 @@ namespace Metrics.Influxdb.Adapters
 		/// Flushes all buffered records in the batch by writing them to the server.
 		/// </summary>
 		public override void Flush() {
+			if (Batch.Count == 0) return;
 			Byte[] bytes = new Byte[0];
 			String strBatch = String.Empty;
+
 			try {
-				if (Batch.Count == 0) return;
 				strBatch = Batch.ToLineProtocol();
 				bytes = Encoding.UTF8.GetBytes(strBatch);
 				WriteToTransport(bytes);

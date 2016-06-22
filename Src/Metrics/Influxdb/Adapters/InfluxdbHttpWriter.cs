@@ -12,6 +12,7 @@ namespace Metrics.Influxdb.Adapters
 	public class InfluxdbHttpWriter : InfluxdbLineWriter
 	{
 
+		protected readonly InfluxConfig config;
 		protected readonly Uri influxDbUri;
 
 
@@ -30,9 +31,14 @@ namespace Metrics.Influxdb.Adapters
 		/// <param name="batchSize">The maximum number of records to write per flush. Set to zero to write all records in a single flush. Negative numbers are not allowed.</param>
 		public InfluxdbHttpWriter(InfluxConfig config, Int32 batchSize = 0)
 			: base(batchSize) {
+			this.config = config;
 			if (config == null)
 				throw new ArgumentNullException(nameof(config));
-			
+			if (String.IsNullOrEmpty(config.Hostname))
+				throw new ArgumentNullException(nameof(config.Hostname));
+			if (String.IsNullOrEmpty(config.Database))
+				throw new ArgumentNullException(nameof(config.Database));
+
 			this.influxDbUri = FormatInfluxUri(config);
 			if (influxDbUri == null)
 				throw new ArgumentNullException(nameof(influxDbUri));
@@ -48,7 +54,8 @@ namespace Metrics.Influxdb.Adapters
 		/// <param name="config">The configuration object to get the relevant fields to build the HTTP URI from.</param>
 		/// <returns>A new InfluxDB URI using the configuration specified in the <paramref name="config"/> parameter.</returns>
 		protected static Uri FormatInfluxUri(InfluxConfig config) {
-			return InfluxUtils.FormatInfluxUri(config.Hostname, config.Port, config.Username, config.Password, config.Database, config.RetentionPolicy, config.Precision);
+			UInt16 port = (config.Port ?? 0) > 0 ? config.Port.Value : InfluxConfig.Default.PortHttp;
+			return InfluxUtils.FormatInfluxUri(config.Hostname, port, config.Username, config.Password, config.Database, config.RetentionPolicy, config.Precision);
 		}
 
 		/// <summary>

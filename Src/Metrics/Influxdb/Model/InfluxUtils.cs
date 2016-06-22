@@ -231,15 +231,32 @@ namespace Metrics.Influxdb.Model
 		/// <param name="precision">The timestamp precision specifier used in the line protocol writes. Leave blank to use the default of <see cref="InfluxConfig.Default.Precision"/>.</param>
 		/// <returns>A new InfluxDB URI using the specified parameters.</returns>
 		public static Uri FormatInfluxUri(String host, UInt16? port, String username, String password, String database, String retentionPolicy = null, InfluxPrecision? precision = null) {
+			return FormatInfluxUri("http", host, port, username, password, database, retentionPolicy, precision);
+		}
+
+		/// <summary>
+		/// Creates a URI for the specified hostname and database using authentication. Optionally uses the default retention policy (DEFAULT) and time precision (s).
+		/// </summary>
+		/// <param name="scheme">The URI scheme type, ie. http, https, net.tcp, net.udp</param>
+		/// <param name="host">The hostname or IP address of the InfluxDB server.</param>
+		/// <param name="port">The port number of the InfluxDB server. Set to zero to use the default of <see cref="InfluxConfig.Default.PortHttp"/>.</param>
+		/// <param name="username">The username to use to authenticate to the InfluxDB server. Leave blank to skip authentication.</param>
+		/// <param name="password">The password to use to authenticate to the InfluxDB server. Leave blank to skip authentication.</param>
+		/// <param name="database">The name of the database to write records to.</param>
+		/// <param name="retentionPolicy">The retention policy to use. Leave blank to use the server default of "DEFAULT".</param>
+		/// <param name="precision">The timestamp precision specifier used in the line protocol writes. Leave blank to use the default of <see cref="InfluxConfig.Default.Precision"/>.</param>
+		/// <returns>A new InfluxDB URI using the specified parameters.</returns>
+		public static Uri FormatInfluxUri(String scheme, String host, UInt16? port, String username, String password, String database, String retentionPolicy = null, InfluxPrecision? precision = null) {
+			scheme = scheme ?? "http";
 			if ((port ?? 0) == 0) port = InfluxConfig.Default.PortHttp;
 			InfluxPrecision prec = precision ?? InfluxConfig.Default.Precision;
-			String uriString = $@"http://{host}:{port}/write?db={database}";
+			String uriString = $@"{scheme}://{host}:{port}/write?db={database}";
 			if (!String.IsNullOrWhiteSpace(retentionPolicy)) uriString += $@"&rp={retentionPolicy}";
 			if (!String.IsNullOrWhiteSpace(username)) uriString += $@"&u={username}";
 			if (!String.IsNullOrWhiteSpace(password)) uriString += $@"&p={password}";
-			if (prec != InfluxPrecision.Nanoseconds)  uriString += $@"&precision={prec.ToShortName()}"; // only need to specify precision if it's not nanoseconds (the InfluxDB default)
+			if (prec != InfluxPrecision.Nanoseconds) uriString += $@"&precision={prec.ToShortName()}"; // only need to specify precision if it's not nanoseconds (the InfluxDB default)
 			return new Uri(uriString);
-			//return new Uri($@"http://{host}:{port}/write?db={database}&rp={retentionPolicy}&u={username}&p={password}&precision={prec.ToShortName()}");
+			//return new Uri($@"{scheme}://{host}:{port}/write?db={database}&rp={retentionPolicy}&u={username}&p={password}&precision={prec.ToShortName()}");
 		}
 
 

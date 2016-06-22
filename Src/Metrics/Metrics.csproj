@@ -101,6 +101,7 @@
     <Compile Include="Graphite\GraphiteReport.cs" />
     <Compile Include="Graphite\GraphiteSender.cs" />
     <Compile Include="Graphite\UdpGraphiteSender.cs" />
+    <Compile Include="Influxdb\Adapters\InfluxdbUdpWriter.cs" />
     <Compile Include="Influxdb\Adapters\InfluxdbHttpWriter.cs" />
     <Compile Include="Influxdb\Adapters\InfluxdbJsonWriter.cs" />
     <Compile Include="Influxdb\Model\InfluxConfig.cs" />
