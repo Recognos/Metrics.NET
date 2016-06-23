@@ -123,7 +123,7 @@ namespace Metrics.Tests.Influxdb
 			Debug.WriteLine($"InfluxDB LineProtocol Write (count={lastBatch.Count} bytes={fmtSize(bytes.Length)})");
 			Stopwatch sw = Stopwatch.StartNew();
 			Byte[] res = base.WriteToTransport(bytes);
-			Debug.WriteLine($"Uploaded {lastBatch.Count} measurements to InfluxDB in {sw.ElapsedMilliseconds:n0}ms. :: Bytes written: {fmtSize(bytes.Length)} - Response string ({fmtSize(res.Length)}): {Encoding.UTF8.GetString(res)}\n");
+			Debug.WriteLine($"Uploaded {lastBatch.Count} measurements to InfluxDB in {sw.ElapsedMilliseconds:n0}ms. :: Bytes written: {fmtSize(bytes.Length)} - Response string ({fmtSize(res.Length)}): {Encoding.UTF8.GetString(res)}");
 			return res;
 		}
 	}
@@ -169,7 +169,7 @@ namespace Metrics.Tests.Influxdb
 			Debug.WriteLine($"InfluxDB LineProtocol Write (count={lastBatch.Count} bytes={fmtSize(bytes.Length)})");
 			Stopwatch sw = Stopwatch.StartNew();
 			Byte[] res = base.WriteToTransport(bytes);
-			Debug.WriteLine($"Uploaded {lastBatch.Count} measurements to InfluxDB in {sw.ElapsedMilliseconds:n0}ms. :: Bytes written: {fmtSize(bytes.Length)} - Response string ({fmtSize(res.Length)}): {Encoding.UTF8.GetString(res)}\n");
+			Debug.WriteLine($"Uploaded {lastBatch.Count} measurements to InfluxDB in {sw.ElapsedMilliseconds:n0}ms. :: Bytes written: {fmtSize(bytes.Length)} - Response string ({fmtSize(res.Length)}): {Encoding.UTF8.GetString(res)}");
 			return res;
 		}
 	}

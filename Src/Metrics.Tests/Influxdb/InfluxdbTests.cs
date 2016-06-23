@@ -102,7 +102,7 @@ namespace Metrics.Tests.Influxdb
 			var testFields = FieldTestCases.Select(tc => tc.Field);
 
 			// expected values
-			String expTime = InfluxdbLineProtocol.FormatTimestamp(testNow, InfluxPrecision.Seconds);
+			String expTime = InfluxLineProtocol.FormatTimestamp(testNow, InfluxPrecision.Seconds);
 			String expTags = String.Join(",", TagTestCases.Select(tc => tc.Output));
 			String expFields = String.Join(",", FieldTestCases.Select(tc => tc.Output));
 			String expOutput = String.Format("test_name,{0} {1} {2}", expTags, expFields, expTime);
@@ -125,7 +125,7 @@ namespace Metrics.Tests.Influxdb
 			var testNow = new DateTime(2016, 6, 1, 0, 0, 0, DateTimeKind.Utc);
 			var testTags = TagTestCases.Select(tc => tc.Tag);
 			var testFields = FieldTestCases.Select(tc => tc.Field);
-			var expTime = InfluxdbLineProtocol.FormatTimestamp(testNow, InfluxPrecision.Seconds);
+			var expTime = InfluxLineProtocol.FormatTimestamp(testNow, InfluxPrecision.Seconds);
 
 			// test with empty batch
 			InfluxBatch batch = new InfluxBatch();
@@ -171,7 +171,7 @@ namespace Metrics.Tests.Influxdb
 			report.RunReport(metricsData, hsFunc, CancellationToken.None);
 			writer.LastBatch.Should().HaveCount(1);
 
-			var expTime = InfluxdbLineProtocol.FormatTimestamp(metricsData.Timestamp, precision);
+			var expTime = InfluxLineProtocol.FormatTimestamp(metricsData.Timestamp, precision);
 			writer.LastBatch[0].ToLineProtocol().Should().Be($@"testcontext.test_gauge,key1=value1,key4=value4 value=123.456 {expTime}");
 		}
 
@@ -191,7 +191,7 @@ namespace Metrics.Tests.Influxdb
 			report.RunReport(metricsData, hsFunc, CancellationToken.None);
 			writer.LastBatch.Should().HaveCount(1);
 
-			var expTime = InfluxdbLineProtocol.FormatTimestamp(metricsData.Timestamp, precision);
+			var expTime = InfluxLineProtocol.FormatTimestamp(metricsData.Timestamp, precision);
 			writer.LastBatch[0].ToLineProtocol().Should().Be($@"testcontext.test_counter,key1=value1,key4=value4 count=300i {expTime}");
 
 			// add with set item
@@ -200,7 +200,7 @@ namespace Metrics.Tests.Influxdb
 			report.RunReport(metricsData, hsFunc, CancellationToken.None);
 			writer.LastBatch.Should().HaveCount(2);
 
-			expTime = InfluxdbLineProtocol.FormatTimestamp(metricsData.Timestamp, precision);
+			expTime = InfluxLineProtocol.FormatTimestamp(metricsData.Timestamp, precision);
 			writer.LastBatch[0].ToLineProtocol().Should().Be($@"testcontext.test_counter,key1=value1,key4=value4 count=400i {expTime}");
 			writer.LastBatch[1].ToLineProtocol().Should().Be($@"testcontext.test_counter,item2=ival2,item3=ival3,key1=value1,key4=value4 count=100i,percent=25 {expTime}");
 		}
@@ -221,7 +221,7 @@ namespace Metrics.Tests.Influxdb
 			report.RunReport(metricsData, hsFunc, CancellationToken.None);
 			writer.LastBatch.Should().HaveCount(1);
 
-			var expTime = InfluxdbLineProtocol.FormatTimestamp(metricsData.Timestamp, precision);
+			var expTime = InfluxLineProtocol.FormatTimestamp(metricsData.Timestamp, precision);
 			writer.LastBatch[0].ToLineProtocol().Should().StartWith($@"testcontext.test_meter,key1=value1,key4=value4 count=300i,mean_rate=").And.EndWith($@",1_min_rate=0,5_min_rate=0,15_min_rate=0 {expTime}"); ;
 
 			// add with set item
@@ -230,7 +230,7 @@ namespace Metrics.Tests.Influxdb
 			report.RunReport(metricsData, hsFunc, CancellationToken.None);
 			writer.LastBatch.Should().HaveCount(2);
 
-			expTime = InfluxdbLineProtocol.FormatTimestamp(metricsData.Timestamp, precision);
+			expTime = InfluxLineProtocol.FormatTimestamp(metricsData.Timestamp, precision);
 			writer.LastBatch[0].ToLineProtocol().Should().StartWith($@"testcontext.test_meter,key1=value1,key4=value4 count=400i,mean_rate=").And.EndWith($@",1_min_rate=0,5_min_rate=0,15_min_rate=0 {expTime}");
 			writer.LastBatch[1].ToLineProtocol().Should().StartWith($@"testcontext.test_meter,item2=ival2,item3=ival3,key1=value1,key4=value4 count=100i,percent=25,mean_rate=").And.EndWith($@",1_min_rate=0,5_min_rate=0,15_min_rate=0 {expTime}");
 		}
@@ -251,7 +251,7 @@ namespace Metrics.Tests.Influxdb
 			report.RunReport(metricsData, hsFunc, CancellationToken.None);
 			writer.LastBatch.Should().HaveCount(1);
 
-			var expTime = InfluxdbLineProtocol.FormatTimestamp(metricsData.Timestamp, precision);
+			var expTime = InfluxLineProtocol.FormatTimestamp(metricsData.Timestamp, precision);
 			writer.LastBatch[0].ToLineProtocol().Should().Be($@"testcontext.test_hist,key1=value1,key4=value4 count=1i,last=300,min=300,mean=300,max=300,stddev=0,median=300,sample_size=1i,percentile_75%=300,percentile_95%=300,percentile_98%=300,percentile_99%=300,percentile_99.9%=300 {expTime}");
 
 			// add with set item
@@ -260,7 +260,7 @@ namespace Metrics.Tests.Influxdb
 			report.RunReport(metricsData, hsFunc, CancellationToken.None);
 			writer.LastBatch.Should().HaveCount(1);
 
-			expTime = InfluxdbLineProtocol.FormatTimestamp(metricsData.Timestamp, precision);
+			expTime = InfluxLineProtocol.FormatTimestamp(metricsData.Timestamp, precision);
 			writer.LastBatch[0].ToLineProtocol().Should().Be($@"testcontext.test_hist,key1=value1,key4=value4 count=2i,last=100,min=100,mean=200,max=300,stddev=100,median=300,sample_size=2i,percentile_75%=300,percentile_95%=300,percentile_98%=300,percentile_99%=300,percentile_99.9%=300 {expTime}");
 		}
 
@@ -280,7 +280,7 @@ namespace Metrics.Tests.Influxdb
 			report.RunReport(metricsData, hsFunc, CancellationToken.None);
 			writer.LastBatch.Should().HaveCount(1);
 
-			var expTime = InfluxdbLineProtocol.FormatTimestamp(metricsData.Timestamp, precision);
+			var expTime = InfluxLineProtocol.FormatTimestamp(metricsData.Timestamp, precision);
 			writer.LastBatch[0].ToLineProtocol().Should().StartWith($@"testcontext.test_timer,key1=value1,key4=value4 active_sessions=0i,total_time=100i,count=1i,").And.EndWith($@",1_min_rate=0,5_min_rate=0,15_min_rate=0,last=100,min=100,mean=100,max=100,stddev=0,median=100,sample_size=1i,percentile_75%=100,percentile_95%=100,percentile_98%=100,percentile_99%=100,percentile_99.9%=100 {expTime}");
 
 			// add with set item
@@ -289,7 +289,7 @@ namespace Metrics.Tests.Influxdb
 			report.RunReport(metricsData, hsFunc, CancellationToken.None);
 			writer.LastBatch.Should().HaveCount(1);
 
-			expTime = InfluxdbLineProtocol.FormatTimestamp(metricsData.Timestamp, precision);
+			expTime = InfluxLineProtocol.FormatTimestamp(metricsData.Timestamp, precision);
 			writer.LastBatch[0].ToLineProtocol().Should().StartWith($@"testcontext.test_timer,key1=value1,key4=value4 active_sessions=0i,total_time=150i,count=2i,").And.EndWith($@",1_min_rate=0,5_min_rate=0,15_min_rate=0,last=50,min=50,mean=75,max=100,stddev=25,median=100,sample_size=2i,percentile_75%=100,percentile_95%=100,percentile_98%=100,percentile_99%=100,percentile_99.9%=100 {expTime}");
 		}
 
@@ -314,7 +314,7 @@ namespace Metrics.Tests.Influxdb
 			HealthChecks.UnregisterAllHealthChecks(); // unreg first in case something below throws
 			writer.LastBatch.Should().HaveCount(5);
 
-			var expTime = InfluxdbLineProtocol.FormatTimestamp(metricsData.Timestamp, precision);
+			var expTime = InfluxLineProtocol.FormatTimestamp(metricsData.Timestamp, precision);
 			writer.LastBatch[0].ToLineProtocol().Should().Be($@"health_checks,name=health_check_1 ishealthy=True,message=""Healthy check!"" {expTime}");
 			writer.LastBatch[1].ToLineProtocol().Should().Be($@"health_checks,name=health_check_2 ishealthy=False,message=""Unhealthy check!"" {expTime}");
 			writer.LastBatch[2].ToLineProtocol().Should().Be($@"health_checks,name=health_check_3,tag3=key3 ishealthy=True,message=""Healthy check!"" {expTime}");

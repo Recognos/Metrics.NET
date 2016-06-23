@@ -12,6 +12,11 @@ namespace Metrics.Influxdb.Model
 	public static class InfluxUtils
 	{
 
+		public const String RegexUnescSpace = @"(?<!\\)[ ]";
+		public const String RegexUnescEqual = @"(?<!\\)[=]";
+		public const String RegexUnescComma = @"(?<!\\)[,]";
+
+
 		#region Format Values
 
 		/// <summary>
@@ -19,12 +24,12 @@ namespace Metrics.Influxdb.Model
 		/// </summary>
 		/// <param name="value">The string value to lowercase and replace spaces on.</param>
 		/// <param name="lowercase">If true, converts the string to lowercase.</param>
-		/// <param name="replaceChars">The character(s) to replace all space characters with (underscore by default). If null, spaces are not replaced.</param>
+		/// <param name="replaceChars">The character(s) to replace all space characters with (underscore by default). If <see cref="String.Empty"/>, removes all spaces. If null, spaces are not replaced.</param>
 		/// <returns>A copy of the string converted to lowercase with all spaces replaced with the specified character.</returns>
 		public static String LowerAndReplaceSpaces(String value, Boolean lowercase = true, String replaceChars = "_") {
 			if (value == null) throw new ArgumentNullException(nameof(value));
 			if (lowercase) value = value.ToLowerInvariant();
-			if (replaceChars != null) value = Regex.Replace(value, @"(?<!\\)[ ]", replaceChars); // doesn't replace spaces preceded by a '\' (ie. escaped spaces like\ this)
+			if (replaceChars != null) value = Regex.Replace(value, RegexUnescSpace, replaceChars); // doesn't replace spaces preceded by a '\' (ie. escaped spaces like\ this)
 			return value;
 		}
 
@@ -103,26 +108,27 @@ namespace Metrics.Influxdb.Model
 		/// <returns>The tag parsed into an <see cref="InfluxTag"/>, or <see cref="InfluxTag.Empty"/> if the input string is in an invalid format or could not be parsed.</returns>
 		public static InfluxTag ToInfluxTag(String keyValuePair) {
 			if (String.IsNullOrWhiteSpace(keyValuePair)) return InfluxTag.Empty;
-			String[] kvp = keyValuePair.Split('=').Select(s => s.Trim()).Where(s => s.Length > 0).ToArray();
+			String[] kvp = Regex.Split(keyValuePair, RegexUnescEqual).Select(s => s.Trim()).Where(s => s.Length > 0).ToArray();
 			if (kvp.Length != 2) return InfluxTag.Empty;
 			return new InfluxTag(kvp[0], kvp[1]);
 		}
 
 		/// <summary>
-		/// Concatenates the specified MetricTags with any tags parsed from the item set name. The item set name
-		/// can be a single tag value or a comma-separated list of values. Any values that are not in the key/value
-		/// pair format are ignored. One exception to this is if the item name only has a single value and that value
-		/// is not a key/value pair, an <see cref="InfluxTag"/> will be created for it using "name" as the key and itself as the value.
+		/// Concatenates the specified MetricTags with any tags parsed from the item set name. The item set name can be
+		/// a single tag value or a comma-separated list of values. Any values that are not in the key/value pair format
+		/// are ignored. One exception to this is if the item name only has a single value and that value is a key/value
+		/// pair, an <see cref="InfluxTag"/> will be created for it using "Name" as the key and itself as the value.
 		/// </summary>
 		/// <param name="itemName">The item set name, this is a comma-separated list of key/value pairs.</param>
 		/// <param name="tags">The tags to add in addition to any tags in the item set name.</param>
 		/// <returns>A sequence of InfluxTags that contain the tags in <paramref name="tags"/> followed by any valid tags from the item name.</returns>
 		public static IEnumerable<InfluxTag> JoinTags(String itemName, params MetricTags[] tags) {
-			// if there's only one item and it's not a key/value pair, alter it to use "name" as the key and itself as the value
-			String[] split = (itemName ?? String.Empty).Split(',').Select(t => t.Trim()).Where(t => t.Length > 0).ToArray();
-			if (split.Length == 1 && !split[0].Contains("=")) split[0] = $"Name={split[0]}";
+			// if there's only one item and it's not a key/value pair, alter it to use "Name" as the key and itself as the value
+			String name = itemName ?? String.Empty;
+			String[] split = Regex.Split(name, RegexUnescComma).Select(t => t.Trim()).Where(t => t.Length > 0).ToArray();
+			if (split.Length == 1 && !Regex.IsMatch(split[0], RegexUnescEqual)) split[0] = $"Name={split[0]}";
 			var retTags = ToInfluxTags(tags).Concat(ToInfluxTags(split));
-			return retTags.GroupBy(t => t.Key).Select(g => g.Last()); // this is equivalent to: retTags.DistinctBy(t => t.Key), but take the last value instead so global tags get overriden by later tags
+			return retTags.GroupBy(t => t.Key).Select(g => g.Last()); // this is similar to: retTags.DistinctBy(t => t.Key), but takes the last value instead so global tags get overriden by later tags
 		}
 
 		#endregion
@@ -185,13 +191,18 @@ namespace Metrics.Influxdb.Model
 
 		#region URI Helper Methods
 
+		public const String SchemeJson  = "http";
+		public const String SchemeHttp  = "http";
+		public const String SchemeHttps = "https";
+		public const String SchemeUdp   = "net.udp";
+
 		/// <summary>
 		/// Creates a URI for InfluxDB using the values specified in the <see cref="InfluxConfig"/> object.
 		/// </summary>
 		/// <param name="config">The configuration object to get the relevant fields to build the URI from.</param>
 		/// <returns>A new InfluxDB URI using the configuration specified in the <paramref name="config"/> parameter.</returns>
 		public static Uri FormatInfluxUri(this InfluxConfig config) {
-			return FormatInfluxUri(config.Hostname, config.Port, config.Username, config.Password, config.Database, config.RetentionPolicy, config.Precision);
+			return FormatInfluxUri(config.Hostname, config.Port, config.Database, config.Username, config.Password, config.RetentionPolicy, config.Precision);
 		}
 
 		/// <summary>
@@ -210,53 +221,53 @@ namespace Metrics.Influxdb.Model
 		/// Creates a URI for the specified hostname and database. Uses no authentication, and optionally uses the default retention policy (DEFAULT) and time precision (s).
 		/// </summary>
 		/// <param name="host">The hostname or IP address of the InfluxDB server.</param>
-		/// <param name="port">The port number of the InfluxDB server. Set to zero to use the default of <see cref="InfluxConfig.Default.PortHttp"/>.</param>
+		/// <param name="port">The port number of the InfluxDB server. Set to zero to use the default of <see cref="InfluxConfig.Default.PortHttp"/>. This value is required for the UDP protocol.</param>
 		/// <param name="database">The name of the database to write records to.</param>
 		/// <param name="retentionPolicy">The retention policy to use. Leave blank to use the server default of "DEFAULT".</param>
 		/// <param name="precision">The timestamp precision specifier used in the line protocol writes. Leave blank to use the default of <see cref="InfluxConfig.Default.Precision"/>.</param>
 		/// <returns>A new InfluxDB URI using the specified parameters.</returns>
 		public static Uri FormatInfluxUri(String host, UInt16? port, String database, String retentionPolicy = null, InfluxPrecision? precision = null) {
-			return FormatInfluxUri(host, port, null, null, database, retentionPolicy, precision);
+			return FormatInfluxUri(host, port, database, null, null, retentionPolicy, precision);
 		}
 
 		/// <summary>
 		/// Creates a URI for the specified hostname and database using authentication. Optionally uses the default retention policy (DEFAULT) and time precision (s).
 		/// </summary>
 		/// <param name="host">The hostname or IP address of the InfluxDB server.</param>
-		/// <param name="port">The port number of the InfluxDB server. Set to zero to use the default of <see cref="InfluxConfig.Default.PortHttp"/>.</param>
+		/// <param name="port">The port number of the InfluxDB server. Set to zero to use the default of <see cref="InfluxConfig.Default.PortHttp"/>. This value is required for the UDP protocol.</param>
+		/// <param name="database">The name of the database to write records to.</param>
 		/// <param name="username">The username to use to authenticate to the InfluxDB server. Leave blank to skip authentication.</param>
 		/// <param name="password">The password to use to authenticate to the InfluxDB server. Leave blank to skip authentication.</param>
-		/// <param name="database">The name of the database to write records to.</param>
 		/// <param name="retentionPolicy">The retention policy to use. Leave blank to use the server default of "DEFAULT".</param>
 		/// <param name="precision">The timestamp precision specifier used in the line protocol writes. Leave blank to use the default of <see cref="InfluxConfig.Default.Precision"/>.</param>
 		/// <returns>A new InfluxDB URI using the specified parameters.</returns>
-		public static Uri FormatInfluxUri(String host, UInt16? port, String username, String password, String database, String retentionPolicy = null, InfluxPrecision? precision = null) {
-			return FormatInfluxUri("http", host, port, username, password, database, retentionPolicy, precision);
+		public static Uri FormatInfluxUri(String host, UInt16? port, String database, String username, String password, String retentionPolicy = null, InfluxPrecision? precision = null) {
+			return FormatInfluxUri("http", host, port, database, username, password, retentionPolicy, precision);
 		}
 
 		/// <summary>
 		/// Creates a URI for the specified hostname and database using authentication. Optionally uses the default retention policy (DEFAULT) and time precision (s).
 		/// </summary>
-		/// <param name="scheme">The URI scheme type, ie. http, https, net.tcp, net.udp</param>
+		/// <param name="scheme">The URI scheme type, ie. http, https, net.udp</param>
 		/// <param name="host">The hostname or IP address of the InfluxDB server.</param>
-		/// <param name="port">The port number of the InfluxDB server. Set to zero to use the default of <see cref="InfluxConfig.Default.PortHttp"/>.</param>
+		/// <param name="port">The port number of the InfluxDB server. Set to zero to use the default of <see cref="InfluxConfig.Default.PortHttp"/>. This value is required for the UDP protocol.</param>
+		/// <param name="database">The name of the database to write records to.</param>
 		/// <param name="username">The username to use to authenticate to the InfluxDB server. Leave blank to skip authentication.</param>
 		/// <param name="password">The password to use to authenticate to the InfluxDB server. Leave blank to skip authentication.</param>
-		/// <param name="database">The name of the database to write records to.</param>
 		/// <param name="retentionPolicy">The retention policy to use. Leave blank to use the server default of "DEFAULT".</param>
 		/// <param name="precision">The timestamp precision specifier used in the line protocol writes. Leave blank to use the default of <see cref="InfluxConfig.Default.Precision"/>.</param>
 		/// <returns>A new InfluxDB URI using the specified parameters.</returns>
-		public static Uri FormatInfluxUri(String scheme, String host, UInt16? port, String username, String password, String database, String retentionPolicy = null, InfluxPrecision? precision = null) {
-			scheme = scheme ?? "http";
-			if ((port ?? 0) == 0) port = InfluxConfig.Default.PortHttp;
+		public static Uri FormatInfluxUri(String scheme, String host, UInt16? port, String database, String username, String password, String retentionPolicy = null, InfluxPrecision? precision = null) {
+			scheme = scheme ?? InfluxUtils.SchemeHttp;
+			if ((port ?? 0) == 0 && (scheme == SchemeHttp || scheme == SchemeHttps)) port = InfluxConfig.Default.PortHttp;
 			InfluxPrecision prec = precision ?? InfluxConfig.Default.Precision;
 			String uriString = $@"{scheme}://{host}:{port}/write?db={database}";
-			if (!String.IsNullOrWhiteSpace(retentionPolicy)) uriString += $@"&rp={retentionPolicy}";
 			if (!String.IsNullOrWhiteSpace(username)) uriString += $@"&u={username}";
 			if (!String.IsNullOrWhiteSpace(password)) uriString += $@"&p={password}";
-			if (prec != InfluxPrecision.Nanoseconds) uriString += $@"&precision={prec.ToShortName()}"; // only need to specify precision if it's not nanoseconds (the InfluxDB default)
+			if (!String.IsNullOrWhiteSpace(retentionPolicy)) uriString += $@"&rp={retentionPolicy}";
+			if (prec != InfluxPrecision.Nanoseconds)  uriString += $@"&precision={prec.ToShortName()}"; // only need to specify precision if it's not nanoseconds (the InfluxDB default)
 			return new Uri(uriString);
-			//return new Uri($@"{scheme}://{host}:{port}/write?db={database}&rp={retentionPolicy}&u={username}&p={password}&precision={prec.ToShortName()}");
+			//return new Uri($@"{scheme}://{host}:{port}/write?db={database}&u={username}&p={password}&rp={retentionPolicy}&precision={prec.ToShortName()}");
 		}
 
 

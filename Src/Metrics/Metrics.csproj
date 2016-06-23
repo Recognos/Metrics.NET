@@ -104,6 +104,7 @@
     <Compile Include="Influxdb\Adapters\InfluxdbUdpWriter.cs" />
     <Compile Include="Influxdb\Adapters\InfluxdbHttpWriter.cs" />
     <Compile Include="Influxdb\Adapters\InfluxdbJsonWriter.cs" />
+    <Compile Include="Influxdb\InfluxdbUdpReport.cs" />
     <Compile Include="Influxdb\Model\InfluxConfig.cs" />
     <Compile Include="Influxdb\InfluxdbConfigExtensions.cs" />
     <Compile Include="Influxdb\InfluxdbBaseReport.cs" />
@@ -111,7 +112,7 @@
     <Compile Include="Influxdb\InfluxdbJsonReport.cs" />
     <Compile Include="Influxdb\Adapters\InfluxdbConverter.cs" />
     <Compile Include="Influxdb\Adapters\InfluxdbFormatter.cs" />
-    <Compile Include="Influxdb\InfluxdbLineProtocol.cs" />
+    <Compile Include="Influxdb\Model\InfluxLineProtocol.cs" />
     <Compile Include="Influxdb\InfluxdbReport.cs" />
     <Compile Include="Influxdb\Adapters\InfluxdbWriter.cs" />
     <Compile Include="Influxdb\Model\InfluxUtils.cs" />

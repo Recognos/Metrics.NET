@@ -11,8 +11,7 @@ namespace Metrics.Influxdb.Adapters
 	/// The <see cref="InfluxdbWriter"/> is responsible for writing <see cref="InfluxRecord"/>s to the InfluxDB server.
 	/// Derived classes can implement various methods and protocols for writing the data (ie. HTTP API, UDP, etc).
 	/// </summary>
-	public abstract class InfluxdbWriter : IDisposable
-	{
+	public abstract class InfluxdbWriter : IDisposable {
 		// formats bytes into a string with units either in bytes or KiB
 		protected static readonly Func<Int64, String> fmtSize = bytes => bytes < (1 << 12) ? $"{bytes:n0} bytes" : $"{bytes / 1024.0:n2} KiB";
 
@@ -47,7 +46,7 @@ namespace Metrics.Influxdb.Adapters
 		/// <summary>
 		/// Creates a new instance of a <see cref="InfluxdbWriter"/>.
 		/// </summary>
-		public InfluxdbWriter() 
+		public InfluxdbWriter()
 			: this(0) {
 		}
 
@@ -64,12 +63,45 @@ namespace Metrics.Influxdb.Adapters
 		}
 
 
+		#region Abstract Methods
+
+		/// <summary>
+		/// Gets the byte representation of the <see cref="InfluxBatch"/>. This will convert the
+		/// batch to the correct string syntax and then get the byte array for it in UTF8 encoding.
+		/// </summary>
+		/// <param name="batch">The batch to get the bytes for.</param>
+		/// <returns>The byte representation of the batch.</returns>
+		protected abstract Byte[] GetBatchBytes(InfluxBatch batch);
+
+		/// <summary>
+		/// Writes the byte array to the InfluxDB server using the underlying transport.
+		/// </summary>
+		/// <param name="bytes">The bytes to write to the InfluxDB server.</param>
+		/// <returns>The response from the server after writing the message, or null if there is no response (like for UDP).</returns>
+		protected abstract Byte[] WriteToTransport(Byte[] bytes);
+
+		#endregion
+
 		#region Public Methods
 
 		/// <summary>
 		/// Flushes all buffered records in the batch by writing them to the server in a single write operation.
 		/// </summary>
-		public abstract void Flush();
+		public virtual void Flush() {
+			if (Batch.Count == 0) return;
+			Byte[] bytes = new Byte[0];
+
+			try {
+				bytes = GetBatchBytes(Batch);
+				WriteToTransport(bytes);
+			} catch (Exception ex) {
+				String firstNLines = "\n" + String.Join("\n", Encoding.UTF8.GetString(bytes).Split('\n').Take(5)) + "\n";
+				MetricsErrorHandler.Handle(ex, $"Error while flushing {Batch.Count} measurements to InfluxDB. Bytes: {fmtSize(bytes.Length)} - First 5 lines: {firstNLines}");
+			} finally {
+				// clear always, regardless if it was successful or not
+				Batch.Clear();
+			}
+		}
 
 		/// <summary>
 		/// Writes the record to the InfluxDB server. If batching is used, the record will be added to the
@@ -122,34 +154,15 @@ namespace Metrics.Influxdb.Adapters
 			: base(batchSize) {
 		}
 
-
 		/// <summary>
-		/// Flushes all buffered records in the batch by writing them to the server.
+		/// Gets the byte representation of the <see cref="InfluxBatch"/> in LineProtocol syntax using UTF8 encoding.
 		/// </summary>
-		public override void Flush() {
-			if (Batch.Count == 0) return;
-			Byte[] bytes = new Byte[0];
-			String strBatch = String.Empty;
-
-			try {
-				strBatch = Batch.ToLineProtocol();
-				bytes = Encoding.UTF8.GetBytes(strBatch);
-				WriteToTransport(bytes);
-			} catch (Exception ex) {
-				String firstNLines = String.Join("\n", strBatch.Split('\n').Take(5));
-				MetricsErrorHandler.Handle(ex, $"Error while flushing {Batch.Count} measurements to InfluxDB. Bytes: {fmtSize(bytes.Length)} - First 5 lines: {firstNLines}");
-			} finally {
-				// clear always, regardless if it was successful or not
-				Batch.Clear();
-			}
+		/// <param name="batch">The batch to get the bytes for.</param>
+		/// <returns>The byte representation of the batch.</returns>
+		protected override Byte[] GetBatchBytes(InfluxBatch batch) {
+			var strBatch = batch.ToLineProtocol();
+			var bytes = Encoding.UTF8.GetBytes(strBatch);
+			return bytes;
 		}
-
-		/// <summary>
-		/// Writes the byte array to the InfluxDB server using the underlying transport.
-		/// </summary>
-		/// <param name="bytes">The bytes to write to the InfluxDB server.</param>
-		/// <returns>The response from the server after writing the message, or null if there is no response (like for UDP).</returns>
-		protected abstract Byte[] WriteToTransport(Byte[] bytes);
-
 	}
 }

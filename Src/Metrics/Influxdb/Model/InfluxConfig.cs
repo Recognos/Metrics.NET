@@ -71,6 +71,7 @@ namespace Metrics.Influxdb.Model
 
 		/// <summary>
 		/// The precision of the timestamp value in the line protocol syntax.
+		/// This value should generally be as large as possible to reduce network traffic.
 		/// </summary>
 		public InfluxPrecision? Precision { get; set; }
 
@@ -84,9 +85,9 @@ namespace Metrics.Influxdb.Model
 		public InfluxdbConverter Converter { get; set; }
 
 		/// <summary>
-		/// The <see cref="InfluxdbFormatter"/> is used to format the context and metric names into strings
-		/// which are used as the table name to insert <see cref="InfluxRecord"/>s into. This also optionally
-		/// formats the column names by converting the case and replacing spaces with another character.
+		/// The <see cref="InfluxdbFormatter"/> is used to format the context and metric names into strings which are
+		/// used as the table name to insert <see cref="InfluxRecord"/>s into. This also optionally formats the tag
+		/// and field keys into column names by converting the case and replacing spaces with another character.
 		/// </summary>
 		public InfluxdbFormatter Formatter { get; set; }
 

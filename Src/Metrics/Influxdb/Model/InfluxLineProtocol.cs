@@ -2,14 +2,13 @@
 using System.Globalization;
 using System.Linq;
 using System.Text;
-using Metrics.Influxdb.Model;
 
-namespace Metrics.Influxdb
+namespace Metrics.Influxdb.Model
 {
 	/// <summary>
 	/// Defines static methods to convert influx tags, fields, records, and batches to a string in the line protocol format.
 	/// </summary>
-	public static class InfluxdbLineProtocol
+	public static class InfluxLineProtocol
 	{
 
 		#region Convert InfluxDB model objects to LineProtocol syntax

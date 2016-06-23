@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Text;
 using Metrics.Influxdb.Model;
@@ -55,7 +56,7 @@ namespace Metrics.Influxdb.Adapters
 		/// <returns>A new InfluxDB URI using the configuration specified in the <paramref name="config"/> parameter.</returns>
 		protected static Uri FormatInfluxUri(InfluxConfig config) {
 			UInt16 port = (config.Port ?? 0) > 0 ? config.Port.Value : InfluxConfig.Default.PortHttp;
-			return InfluxUtils.FormatInfluxUri(config.Hostname, port, config.Username, config.Password, config.Database, config.RetentionPolicy, config.Precision);
+			return InfluxUtils.FormatInfluxUri(config.Hostname, port, config.Database, config.Username, config.Password, config.RetentionPolicy, config.Precision);
 		}
 
 		/// <summary>
@@ -70,8 +71,9 @@ namespace Metrics.Influxdb.Adapters
 					return result;
 				}
 			} catch (WebException ex) {
-				String response = new StreamReader(ex.Response.GetResponseStream()).ReadToEnd();
-				MetricsErrorHandler.Handle(ex, $"Error while uploading {Batch.Count} measurements to InfluxDB over HTTP [{influxDbUri}] [ResponseStatus: {ex.Status}]: {response}");
+				String response = new StreamReader(ex.Response?.GetResponseStream() ?? Stream.Null).ReadToEnd();
+				String firstNLines = "\n" + String.Join("\n", Encoding.UTF8.GetString(bytes).Split('\n').Take(5)) + "\n";
+				MetricsErrorHandler.Handle(ex, $"Error while uploading {Batch.Count} measurements ({fmtSize(bytes.Length)}) to InfluxDB over HTTP [{influxDbUri}] [ResponseStatus: {ex.Status}] [Response: {response}] - First 5 lines: {firstNLines}");
 				return Encoding.UTF8.GetBytes(response);
 			}
 		}

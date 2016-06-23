@@ -66,25 +66,16 @@ namespace Metrics.Influxdb.Adapters
 			return new Uri($@"http://{config.Hostname}:{config.Port}/db/{config.Database}/series?u={config.Username}&p={config.Password}&time_precision={prec.ToShortName()}");
 		}
 
-		/// <summary>
-		/// Flushes all buffered records in the batch by writing them to the server.
-		/// </summary>
-		public override void Flush() {
-			if (Batch.Count == 0) return;
-			Byte[] bytes = new Byte[0];
-			String strBatch = String.Empty;
 
-			try {
-				strBatch = ToJson(batch);
-				bytes = Encoding.UTF8.GetBytes(strBatch);
-				WriteToTransport(bytes);
-			} catch (Exception ex) {
-				String firstNLines = String.Join("\n", strBatch.Split('\n').Take(5));
-				MetricsErrorHandler.Handle(ex, $"Error while flushing {Batch.Count} measurements to InfluxDB. Bytes: {fmtSize(bytes.Length)} - First 5 lines: {firstNLines}");
-			} finally {
-				// clear always, regardless if it was successful or not
-				Batch.Clear();
-			}
+		/// <summary>
+		/// Gets the byte representation of the <see cref="InfluxBatch"/> in JSON syntax using UTF8 encoding.
+		/// </summary>
+		/// <param name="batch">The batch to get the bytes for.</param>
+		/// <returns>The byte representation of the batch.</returns>
+		protected override Byte[] GetBatchBytes(InfluxBatch batch) {
+			var strBatch = ToJson(batch);
+			var bytes = Encoding.UTF8.GetBytes(strBatch);
+			return bytes;
 		}
 
 		/// <summary>
@@ -92,15 +83,16 @@ namespace Metrics.Influxdb.Adapters
 		/// </summary>
 		/// <param name="bytes">The bytes to write to the InfluxDB server.</param>
 		/// <returns>The HTTP response from the server after writing the message.</returns>
-		protected virtual Byte[] WriteToTransport(Byte[] bytes) {
+		protected override Byte[] WriteToTransport(Byte[] bytes) {
 			try {
 				using (var client = new WebClient()) {
 					var result = client.UploadData(influxDbUri, bytes);
 					return result;
 				}
 			} catch (WebException ex) {
-				String response = new StreamReader(ex.Response.GetResponseStream()).ReadToEnd();
-				MetricsErrorHandler.Handle(ex, $"Error while uploading {Batch.Count} measurements to InfluxDB over JSON HTTP [{influxDbUri}] [ResponseStatus: {ex.Status}]: {response}");
+				String response = new StreamReader(ex.Response?.GetResponseStream() ?? Stream.Null).ReadToEnd();
+				String firstNLines = "\n" + String.Join("\n", Encoding.UTF8.GetString(bytes).Split('\n').Take(5)) + "\n";
+				MetricsErrorHandler.Handle(ex, $"Error while uploading {Batch.Count} measurements ({fmtSize(bytes.Length)}) to InfluxDB over JSON HTTP [{influxDbUri}] [ResponseStatus: {ex.Status}] [Response: {response}] - First 5 lines: {firstNLines}");
 				return Encoding.UTF8.GetBytes(response);
 			}
 		}

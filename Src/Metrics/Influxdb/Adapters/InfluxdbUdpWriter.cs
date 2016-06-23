@@ -1,6 +1,5 @@
 ﻿using System;
-using System.IO;
-using System.Net;
+using System.Linq;
 using System.Net.Sockets;
 using System.Text;
 using Metrics.Influxdb.Model;
@@ -19,7 +18,7 @@ namespace Metrics.Influxdb.Adapters
 		/// <summary>
 		/// Creates a new <see cref="InfluxdbUdpWriter"/> with the specified URI.
 		/// </summary>
-		/// <param name="influxDbUri">The UDP URI of the InfluxDB server. Should be: net.udp//{host}:{port}/</param>
+		/// <param name="influxDbUri">The UDP URI of the InfluxDB server. Should be in the format: net.udp//{host}:{port}/</param>
 		public InfluxdbUdpWriter(Uri influxDbUri)
 			: this(new InfluxConfig(influxDbUri)) {
 		}
@@ -38,6 +37,8 @@ namespace Metrics.Influxdb.Adapters
 				throw new ArgumentNullException(nameof(config.Hostname));
 			if ((config.Port ?? 0) == 0)
 				throw new ArgumentNullException(nameof(config.Port), "Port is required for UDP connections.");
+			if ((config.Precision ?? InfluxPrecision.Nanoseconds) != InfluxPrecision.Nanoseconds)
+				throw new ArgumentException($"Timestamp precision for UDP connections must be Nanoseconds. Actual: {config.Precision}", nameof(config.Precision));
 		}
 
 		public override void Flush() {
@@ -55,11 +56,12 @@ namespace Metrics.Influxdb.Adapters
 			try {
 				using (var client = new UdpClient()) {
 					int result = client.Send(bytes, bytes.Length, config.Hostname, config.Port.Value);
-					return BitConverter.GetBytes(result);
+					return Encoding.UTF8.GetBytes(result.ToString());
 				}
 			} catch (Exception ex) {
-				MetricsErrorHandler.Handle(ex, $"Error while uploading {Batch.Count} measurements to InfluxDB over UDP [net.udp://{config.Hostname}:{config.Port.Value}/]");
-				return BitConverter.GetBytes(0);
+				String firstNLines = "\n" + String.Join("\n", Encoding.UTF8.GetString(bytes).Split('\n').Take(5)) + "\n";
+				MetricsErrorHandler.Handle(ex, $"Error while uploading {Batch.Count} measurements ({fmtSize(bytes.Length)}) to InfluxDB over UDP [net.udp://{config.Hostname}:{config.Port.Value}/] - Ensure that the message size is less than the UDP send buffer size (usually 8-64KB), and reduce the BatchSize on the InfluxdbWriter if necessary. - First 5 lines: {firstNLines}");
+				return Encoding.UTF8.GetBytes(0.ToString());
 			}
 		}
 	}
