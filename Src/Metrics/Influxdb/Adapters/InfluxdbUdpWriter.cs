@@ -12,9 +12,6 @@ namespace Metrics.Influxdb.Adapters
 	public class InfluxdbUdpWriter : InfluxdbLineWriter
 	{
 
-		protected readonly InfluxConfig config;
-
-
 		/// <summary>
 		/// Creates a new <see cref="InfluxdbUdpWriter"/> with the specified URI.
 		/// </summary>
@@ -24,15 +21,13 @@ namespace Metrics.Influxdb.Adapters
 		}
 
 		/// <summary>
-		/// Creates a new <see cref="InfluxdbUdpWriter"/> with the specified URI.
+		/// Creates a new <see cref="InfluxdbUdpWriter"/> with the specified configuration and batch size.
 		/// </summary>
 		/// <param name="config">The InfluxDB configuration.</param>
 		/// <param name="batchSize">The maximum number of records to write per flush. Set to zero to write all records in a single flush. Negative numbers are not allowed.</param>
 		public InfluxdbUdpWriter(InfluxConfig config, Int32 batchSize = 0)
-			: base(batchSize) {
-			this.config = config;
-			if (config == null)
-				throw new ArgumentNullException(nameof(config));
+			: base(config, batchSize) {
+
 			if (String.IsNullOrEmpty(config.Hostname))
 				throw new ArgumentNullException(nameof(config.Hostname));
 			if ((config.Port ?? 0) == 0)
@@ -41,10 +36,17 @@ namespace Metrics.Influxdb.Adapters
 				throw new ArgumentException($"Timestamp precision for UDP connections must be Nanoseconds. Actual: {config.Precision}", nameof(config.Precision));
 		}
 
-		public override void Flush() {
+
+		/// <summary>
+		/// Gets the byte representation of the <see cref="InfluxBatch"/> in LineProtocol syntax using UTF8 encoding.
+		/// </summary>
+		/// <param name="batch">The batch to get the bytes for.</param>
+		/// <returns>The byte representation of the batch.</returns>
+		protected override Byte[] GetBatchBytes(InfluxBatch batch) {
 			// UDP only supports ns precision
-			Batch.ForEach(r => r.Precision = InfluxPrecision.Nanoseconds);
-			base.Flush();
+			var strBatch = batch.ToLineProtocol(InfluxPrecision.Nanoseconds);
+			var bytes = Encoding.UTF8.GetBytes(strBatch);
+			return bytes;
 		}
 
 		/// <summary>

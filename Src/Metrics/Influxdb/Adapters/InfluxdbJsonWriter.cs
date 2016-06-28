@@ -75,6 +75,7 @@ namespace Metrics.Influxdb.Adapters
 		protected override Byte[] GetBatchBytes(InfluxBatch batch) {
 			var strBatch = ToJson(batch);
 			var bytes = Encoding.UTF8.GetBytes(strBatch);
+			System.Diagnostics.Debug.WriteLine($"[NEW JSON]:\n{strBatch}");
 			return bytes;
 		}
 

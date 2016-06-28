@@ -30,7 +30,6 @@ namespace Metrics.Influxdb
 			var config = base.GetDefaultConfig(defaultConfig) ?? new InfluxConfig();
 			config.Writer = config.Writer ?? new InfluxdbHttpWriter(config);
 			return config;
-
 		}
 	}
 }

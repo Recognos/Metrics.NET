@@ -113,6 +113,21 @@ namespace Metrics
 		/// </summary>
 		/// <param name="reports">The <see cref="MetricsReports"/> instance.</param>
 		/// <param name="host">The hostname or IP address of the InfluxDB server.</param>
+		/// <param name="port">The port number to connect to on the InfluxDB server, or null to use the default port number.</param>
+		/// <param name="database">The database name to write values to.</param>
+		/// <param name="interval">Interval at which to run the report.</param>
+		/// <param name="filter">Only report metrics that match the filter.</param> 
+		/// <param name="configFunc">A lambda expression that allows further configuration of the InfluxDB reporter using fluent syntax.</param>
+		/// <returns>The <see cref="MetricsReports"/> instance.</returns>
+		public static MetricsReports WithInfluxDbHttp(this MetricsReports reports, String host, UInt16? port, String database, TimeSpan interval, MetricsFilter filter = null, Action<InfluxConfig> configFunc = null) {
+			return reports.WithInfluxDbHttp(new InfluxConfig(host, port, database), interval, filter, configFunc);
+		}
+
+		/// <summary>
+		/// Schedules an <see cref="InfluxdbHttpReport"/> to be executed at a fixed interval.
+		/// </summary>
+		/// <param name="reports">The <see cref="MetricsReports"/> instance.</param>
+		/// <param name="host">The hostname or IP address of the InfluxDB server.</param>
 		/// <param name="database">The database name to write values to.</param>
 		/// <param name="retentionPolicy">The retention policy to use when writing datapoints to the InfluxDB database, or null to use the database's default retention policy.</param>
 		/// <param name="precision">The precision of the timestamp value in the line protocol syntax.</param>
@@ -258,11 +273,37 @@ namespace Metrics
 		/// Sets the Writer on the InfluxDB reporter configuration and returns the same instance.
 		/// </summary>
 		/// <param name="config">The InfluxDB reporter configuration.</param>
-		/// <param name="writer">The InfluxDB metric writer.</param>
+		/// <param name="username">The username.</param>
+		/// <param name="password">The username.</param>
 		/// <returns>This <see cref="InfluxConfig"/> instance.</returns>
-		public static InfluxConfig WithWriter(this InfluxConfig config, InfluxdbWriter writer) {
+		public static InfluxConfig WithCredentials(this InfluxConfig config, String username, String password) {
+			config.Username = username;
+			config.Password = password;
+			return config;
+		}
+
+		/// <summary>
+		/// Sets the Writer on the InfluxDB reporter configuration and returns the same instance.
+		/// </summary>
+		/// <param name="config">The InfluxDB reporter configuration.</param>
+		/// <param name="writer">The InfluxDB metric writer.</param>
+		/// <param name="configFunc">A lambda expression that allows further configuration of the <see cref="InfluxdbWriter"/> using fluent syntax.</param>
+		/// <returns>This <see cref="InfluxConfig"/> instance.</returns>
+		public static InfluxConfig WithWriter(this InfluxConfig config, InfluxdbWriter writer, Action<InfluxdbWriter> configFunc = null) {
+			configFunc?.Invoke(writer);
 			config.Writer = writer;
 			return config;
+		}
+
+		/// <summary>
+		/// Creates a <see cref="DefaultConverter"/> and passes it to the configuration lambda expression, then sets the converter on the InfluxDB configuration and returns the same instance.
+		/// </summary>
+		/// <param name="config">The InfluxDB reporter configuration.</param>
+		/// <param name="configFunc">A lambda expression that allows further configuration of the <see cref="InfluxdbConverter"/> using fluent syntax.</param>
+		/// <returns>This <see cref="InfluxConfig"/> instance.</returns>
+		public static InfluxConfig WithConverter(this InfluxConfig config, Action<InfluxdbConverter> configFunc = null) {
+			var converter = new DefaultConverter();
+			return WithConverter(config, converter, configFunc);
 		}
 
 		/// <summary>
@@ -270,10 +311,23 @@ namespace Metrics
 		/// </summary>
 		/// <param name="config">The InfluxDB reporter configuration.</param>
 		/// <param name="converter">The InfluxDB metric converter.</param>
+		/// <param name="configFunc">A lambda expression that allows further configuration of the <see cref="InfluxdbConverter"/> using fluent syntax.</param>
 		/// <returns>This <see cref="InfluxConfig"/> instance.</returns>
-		public static InfluxConfig WithConverter(this InfluxConfig config, InfluxdbConverter converter) {
+		public static InfluxConfig WithConverter(this InfluxConfig config, InfluxdbConverter converter, Action<InfluxdbConverter> configFunc = null) {
+			configFunc?.Invoke(converter);
 			config.Converter = converter;
 			return config;
+		}
+
+		/// <summary>
+		/// Creates a <see cref="DefaultFormatter"/> and passes it to the configuration lambda expression, then sets the formatter on the InfluxDB configuration and returns the same instance.
+		/// </summary>
+		/// <param name="config">The InfluxDB reporter configuration.</param>
+		/// <param name="configFunc">A lambda expression that allows further configuration of the <see cref="InfluxdbFormatter"/> using fluent syntax.</param>
+		/// <returns>This <see cref="InfluxConfig"/> instance.</returns>
+		public static InfluxConfig WithFormatter(this InfluxConfig config, Action<InfluxdbFormatter> configFunc = null) {
+			var formatter = new DefaultFormatter();
+			return WithFormatter(config, formatter, configFunc);
 		}
 
 		/// <summary>
@@ -281,8 +335,10 @@ namespace Metrics
 		/// </summary>
 		/// <param name="config">The InfluxDB reporter configuration.</param>
 		/// <param name="formatter">The InfluxDB metric formatter.</param>
+		/// <param name="configFunc">A lambda expression that allows further configuration of the <see cref="InfluxdbFormatter"/> using fluent syntax.</param>
 		/// <returns>This <see cref="InfluxConfig"/> instance.</returns>
-		public static InfluxConfig WithFormatter(this InfluxConfig config, InfluxdbFormatter formatter) {
+		public static InfluxConfig WithFormatter(this InfluxConfig config, InfluxdbFormatter formatter, Action<InfluxdbFormatter> configFunc = null) {
+			configFunc?.Invoke(formatter);
 			config.Formatter = formatter;
 			return config;
 		}
@@ -290,17 +346,6 @@ namespace Metrics
 		#endregion
 
 		#region InfluxdbConverter Configuration Extensions
-
-		/// <summary>
-		/// Sets the Precision on this instance to the specified value and returns this <see cref="InfluxdbConverter"/> instance.
-		/// </summary>
-		/// <param name="converter">The InfluxDB metric converter.</param>
-		/// <param name="precision">The precision of the timestamp value in the line protocol syntax.</param>
-		/// <returns>This <see cref="InfluxdbConverter"/> instance.</returns>
-		public static InfluxdbConverter WithPrecision(this InfluxdbConverter converter, InfluxPrecision precision) {
-			converter.Precision = precision;
-			return converter;
-		}
 
 		/// <summary>
 		/// Sets the GlobalTags on this instance to the specified value and returns this <see cref="InfluxdbConverter"/> instance.
@@ -406,14 +451,15 @@ namespace Metrics
 
 		[Obsolete(JsonObsoleteMsg)]
 		public static MetricsReports WithInfluxDb(this MetricsReports reports, String host, UInt16 port, String user, String pass, String database, TimeSpan interval, MetricsFilter filter = null) {
-			var config = new InfluxConfig(host, port, database, user, pass, null, InfluxPrecision.Seconds);
-			return reports.WithReport(new InfluxdbJsonReport(config), interval, filter);
-			//return reports.WithInfluxDb(new Uri($@"http://{host}:{port}/db/{database}/series?u={user}&p={pass}&time_precision=s"), interval);
+			//var config = new InfluxConfig(host, port, database, user, pass, null, InfluxPrecision.Seconds);
+			//return reports.WithReport(new InfluxdbJsonReport(config), interval, filter);
+			return reports.WithInfluxDb(new Uri($@"http://{host}:{port}/db/{database}/series?u={user}&p={pass}&time_precision=s"), interval);
 		}
 
 		[Obsolete(JsonObsoleteMsg)]
 		public static MetricsReports WithInfluxDb(this MetricsReports reports, Uri influxdbUri, TimeSpan interval) {
-			return reports.WithReport(new InfluxdbJsonReport(influxdbUri), interval);
+			//return reports.WithReport(new InfluxdbJsonReport(influxdbUri), interval);
+			return reports.WithReport(new InfluxdbReport(influxdbUri), interval);
 		}
 
 		#endregion

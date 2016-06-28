@@ -74,6 +74,15 @@ namespace Metrics.Tests.Influxdb
 		/// </summary>
 		public InfluxBatch LastBatch { get; private set; } = new InfluxBatch();
 
+		/// <summary>
+		/// Creates a new <see cref="InfluxdbTestWriter"/> with the specified configuration and batch size.
+		/// </summary>
+		/// <param name="config">The InfluxDB configuration.</param>
+		/// <param name="batchSize">The maximum number of records to write per flush. Set to zero to write all records in a single flush. Negative numbers are not allowed.</param>
+		public InfluxdbTestWriter(InfluxConfig config, Int32 batchSize = 0)
+			: base(config, batchSize) {
+		}
+
 
 		protected override Byte[] WriteToTransport(Byte[] bytes) {
 			var lastBatch = LastBatch = new InfluxBatch(Batch.ToArray());
@@ -120,10 +129,10 @@ namespace Metrics.Tests.Influxdb
 			var lastBatch = LastBatch = new InfluxBatch(Batch.ToArray());
 			FlushHistory.Add(lastBatch);
 
-			Debug.WriteLine($"InfluxDB LineProtocol Write (count={lastBatch.Count} bytes={fmtSize(bytes.Length)})");
+			Debug.WriteLine($"[HTTP] InfluxDB LineProtocol Write (count={lastBatch.Count} bytes={fmtSize(bytes.Length)})");
 			Stopwatch sw = Stopwatch.StartNew();
 			Byte[] res = base.WriteToTransport(bytes);
-			Debug.WriteLine($"Uploaded {lastBatch.Count} measurements to InfluxDB in {sw.ElapsedMilliseconds:n0}ms. :: Bytes written: {fmtSize(bytes.Length)} - Response string ({fmtSize(res.Length)}): {Encoding.UTF8.GetString(res)}");
+			Debug.WriteLine($"[HTTP] Uploaded {lastBatch.Count} measurements to InfluxDB in {sw.ElapsedMilliseconds:n0}ms. :: Bytes written: {fmtSize(bytes.Length)} - Response string ({fmtSize(res.Length)}): {Encoding.UTF8.GetString(res)}");
 			return res;
 		}
 	}
@@ -166,10 +175,56 @@ namespace Metrics.Tests.Influxdb
 			var lastBatch = LastBatch = new InfluxBatch(Batch.ToArray());
 			FlushHistory.Add(lastBatch);
 
-			Debug.WriteLine($"InfluxDB LineProtocol Write (count={lastBatch.Count} bytes={fmtSize(bytes.Length)})");
+			Debug.WriteLine($"[UDP] InfluxDB LineProtocol Write (count={lastBatch.Count} bytes={fmtSize(bytes.Length)})");
 			Stopwatch sw = Stopwatch.StartNew();
 			Byte[] res = base.WriteToTransport(bytes);
-			Debug.WriteLine($"Uploaded {lastBatch.Count} measurements to InfluxDB in {sw.ElapsedMilliseconds:n0}ms. :: Bytes written: {fmtSize(bytes.Length)} - Response string ({fmtSize(res.Length)}): {Encoding.UTF8.GetString(res)}");
+			Debug.WriteLine($"[UDP] Uploaded {lastBatch.Count} measurements to InfluxDB in {sw.ElapsedMilliseconds:n0}ms. :: Bytes written: {fmtSize(bytes.Length)} - Response string ({fmtSize(res.Length)}): {Encoding.UTF8.GetString(res)}");
+			return res;
+		}
+	}
+
+	/// <summary>
+	/// An <see cref="InfluxdbWriter"/> implementation used for unit testing. This writer keeps a list of all batches flushed to the writer.
+	/// </summary>
+	public class InfluxdbJsonWriterExt : InfluxdbJsonWriter
+	{
+		/// <summary>
+		/// The list of all batches flushed by the writer.
+		/// </summary>
+		public List<InfluxBatch> FlushHistory { get; } = new List<InfluxBatch>();
+
+		/// <summary>
+		/// A copy of the last batch that was flushed by the writer.
+		/// </summary>
+		public InfluxBatch LastBatch { get; private set; } = new InfluxBatch();
+
+
+		/// <summary>
+		/// Creates a new <see cref="InfluxdbJsonWriterExt"/> with the specified URI.
+		/// </summary>
+		/// <param name="influxDbUri">The JSON URI of the InfluxDB server.</param>
+		public InfluxdbJsonWriterExt(Uri influxDbUri)
+			: base(influxDbUri) {
+		}
+
+		/// <summary>
+		/// Creates a new <see cref="InfluxdbJsonWriterExt"/> with the specified URI.
+		/// </summary>
+		/// <param name="config">The InfluxDB configuration.</param>
+		/// <param name="batchSize">The maximum number of records to write per flush. Set to zero to write all records in a single flush. Negative numbers are not allowed.</param>
+		public InfluxdbJsonWriterExt(InfluxConfig config, Int32 batchSize = 0)
+			: base(config, batchSize) {
+		}
+
+
+		protected override Byte[] WriteToTransport(Byte[] bytes) {
+			var lastBatch = LastBatch = new InfluxBatch(Batch.ToArray());
+			FlushHistory.Add(lastBatch);
+
+			Debug.WriteLine($"[JSON] InfluxDB LineProtocol Write (count={lastBatch.Count} bytes={fmtSize(bytes.Length)})");
+			Stopwatch sw = Stopwatch.StartNew();
+			Byte[] res = base.WriteToTransport(bytes);
+			Debug.WriteLine($"[JSON] Uploaded {lastBatch.Count} measurements to InfluxDB in {sw.ElapsedMilliseconds:n0}ms. :: Bytes written: {fmtSize(bytes.Length)} - Response string ({fmtSize(res.Length)}): {Encoding.UTF8.GetString(res)}");
 			return res;
 		}
 	}

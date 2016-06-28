@@ -13,7 +13,6 @@ namespace Metrics.Influxdb.Adapters
 	public class InfluxdbHttpWriter : InfluxdbLineWriter
 	{
 
-		protected readonly InfluxConfig config;
 		protected readonly Uri influxDbUri;
 
 
@@ -26,15 +25,13 @@ namespace Metrics.Influxdb.Adapters
 		}
 
 		/// <summary>
-		/// Creates a new <see cref="InfluxdbHttpWriter"/> with the specified URI.
+		/// Creates a new <see cref="InfluxdbHttpWriter"/> with the specified configuration and batch size.
 		/// </summary>
 		/// <param name="config">The InfluxDB configuration.</param>
 		/// <param name="batchSize">The maximum number of records to write per flush. Set to zero to write all records in a single flush. Negative numbers are not allowed.</param>
 		public InfluxdbHttpWriter(InfluxConfig config, Int32 batchSize = 0)
-			: base(batchSize) {
-			this.config = config;
-			if (config == null)
-				throw new ArgumentNullException(nameof(config));
+			: base(config, batchSize) {
+
 			if (String.IsNullOrEmpty(config.Hostname))
 				throw new ArgumentNullException(nameof(config.Hostname));
 			if (String.IsNullOrEmpty(config.Database))
@@ -45,7 +42,6 @@ namespace Metrics.Influxdb.Adapters
 				throw new ArgumentNullException(nameof(influxDbUri));
 			if (influxDbUri.Scheme != Uri.UriSchemeHttp && influxDbUri.Scheme != Uri.UriSchemeHttps)
 				throw new ArgumentException($"The URI scheme must be either http or https. Scheme: {influxDbUri.Scheme}", nameof(influxDbUri));
-
 		}
 
 
@@ -56,7 +52,7 @@ namespace Metrics.Influxdb.Adapters
 		/// <returns>A new InfluxDB URI using the configuration specified in the <paramref name="config"/> parameter.</returns>
 		protected static Uri FormatInfluxUri(InfluxConfig config) {
 			UInt16 port = (config.Port ?? 0) > 0 ? config.Port.Value : InfluxConfig.Default.PortHttp;
-			return InfluxUtils.FormatInfluxUri(config.Hostname, port, config.Database, config.Username, config.Password, config.RetentionPolicy, config.Precision);
+			return InfluxUtils.FormatInfluxUri(InfluxUtils.SchemeHttp, config.Hostname, port, config.Database, config.Username, config.Password, config.RetentionPolicy, config.Precision);
 		}
 
 		/// <summary>

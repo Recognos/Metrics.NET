@@ -146,12 +146,18 @@ namespace Metrics.Influxdb.Adapters
 	/// </summary>
 	public abstract class InfluxdbLineWriter : InfluxdbWriter
 	{
+		protected readonly InfluxConfig config;
 
 		/// <summary>
-		/// Creates a new <see cref="InfluxdbLineWriter"/>.
+		/// Creates a new <see cref="InfluxdbLineWriter"/> with the specified configuration and batch size.
 		/// </summary>
-		public InfluxdbLineWriter(Int32 batchSize = 0)
+		/// <param name="config">The InfluxDB configuration.</param>
+		/// <param name="batchSize">The maximum number of records to write per flush. Set to zero to write all records in a single flush. Negative numbers are not allowed.</param>
+		public InfluxdbLineWriter(InfluxConfig config, Int32 batchSize = 0)
 			: base(batchSize) {
+			this.config = config;
+			if (config == null)
+				throw new ArgumentNullException(nameof(config));
 		}
 
 		/// <summary>
@@ -160,7 +166,7 @@ namespace Metrics.Influxdb.Adapters
 		/// <param name="batch">The batch to get the bytes for.</param>
 		/// <returns>The byte representation of the batch.</returns>
 		protected override Byte[] GetBatchBytes(InfluxBatch batch) {
-			var strBatch = batch.ToLineProtocol();
+			var strBatch = batch.ToLineProtocol(config.Precision);
 			var bytes = Encoding.UTF8.GetBytes(strBatch);
 			return bytes;
 		}

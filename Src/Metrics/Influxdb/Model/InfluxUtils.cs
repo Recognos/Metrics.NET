@@ -114,10 +114,11 @@ namespace Metrics.Influxdb.Model
 		}
 
 		/// <summary>
-		/// Concatenates the specified MetricTags with any tags parsed from the item set name. The item set name can be
-		/// a single tag value or a comma-separated list of values. Any values that are not in the key/value pair format
-		/// are ignored. One exception to this is if the item name only has a single value and that value is a key/value
-		/// pair, an <see cref="InfluxTag"/> will be created for it using "Name" as the key and itself as the value.
+		/// Parses any tags from the <paramref name="itemName"/> and concatenates them to the end of the specified <see cref="MetricTags"/> list.
+		/// If there are multiple tags with the same key in the resulting list, tags that occur later in the sequence override earlier tags.
+		/// The <paramref name="itemName"/> can be a single tag value or a comma-separated list of values. Any values that are not in the
+		/// key/value pair format ({key}={value}) are ignored. One exception to this is if the <paramref name="itemName"/> only has a single value
+		/// and that value is not a key/value pair, an <see cref="InfluxTag"/> will be created for it using "Name" as the key and itself as the value.
 		/// </summary>
 		/// <param name="itemName">The item set name, this is a comma-separated list of key/value pairs.</param>
 		/// <param name="tags">The tags to add in addition to any tags in the item set name.</param>
@@ -194,7 +195,7 @@ namespace Metrics.Influxdb.Model
 		public const String SchemeJson  = "http";
 		public const String SchemeHttp  = "http";
 		public const String SchemeHttps = "https";
-		public const String SchemeUdp   = "net.udp";
+		public const String SchemeUdp   = "udp";
 
 		/// <summary>
 		/// Creates a URI for InfluxDB using the values specified in the <see cref="InfluxConfig"/> object.
@@ -242,7 +243,7 @@ namespace Metrics.Influxdb.Model
 		/// <param name="precision">The timestamp precision specifier used in the line protocol writes. Leave blank to use the default of <see cref="InfluxConfig.Default.Precision"/>.</param>
 		/// <returns>A new InfluxDB URI using the specified parameters.</returns>
 		public static Uri FormatInfluxUri(String host, UInt16? port, String database, String username, String password, String retentionPolicy = null, InfluxPrecision? precision = null) {
-			return FormatInfluxUri("http", host, port, database, username, password, retentionPolicy, precision);
+			return FormatInfluxUri(null, host, port, database, username, password, retentionPolicy, precision);
 		}
 
 		/// <summary>

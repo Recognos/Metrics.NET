@@ -68,10 +68,11 @@ namespace Metrics.Influxdb
 		/// </summary>
 		/// <param name="config">The InfluxDB configuration object.</param>
 		public InfluxdbBaseReport(InfluxConfig config = null) {
-			this.config    = GetDefaultConfig(config);
+			this.config    = GetDefaultConfig(config) ?? new InfluxConfig();
 			this.converter = config.Converter;
 			this.formatter = config.Formatter;
 			this.writer    = config.Writer;
+			ValidateConfig(this.config);
 		}
 
 
@@ -84,6 +85,19 @@ namespace Metrics.Influxdb
 		/// <returns>A default <see cref="InfluxConfig"/> instance for the derived type's implementation.</returns>
 		protected virtual InfluxConfig GetDefaultConfig(InfluxConfig defaultConfig) {
 			return defaultConfig;
+		}
+
+		/// <summary>
+		/// Validates the configuration to ensure the configuration is valid and throws an exception on invalid settings.
+		/// </summary>
+		/// <param name="config">The configuration to validate.</param>
+		protected virtual void ValidateConfig(InfluxConfig config) {
+			if (config.Converter == null)
+				throw new ArgumentNullException(nameof(config.Converter), $"InfluxDB configuration invalid: {nameof(config.Converter)} cannot be null");
+			if (config.Formatter == null)
+				throw new ArgumentNullException(nameof(config.Formatter), $"InfluxDB configuration invalid: {nameof(config.Formatter)} cannot be null");
+			if (config.Writer == null)
+				throw new ArgumentNullException(nameof(config.Writer),    $"InfluxDB configuration invalid: {nameof(config.Writer)} cannot be null");
 		}
 
 
@@ -115,27 +129,27 @@ namespace Metrics.Influxdb
 
 
 		protected override void ReportGauge(String name, Double value, Unit unit, MetricTags tags) {
-			writer.Write(converter.GetRecords(name, tags, unit, value).Select(formatter.FormatRecord));
+			writer.Write(converter.GetRecords(name, tags, unit, value).Select(r => formatter?.FormatRecord(r) ?? r));
 		}
 
 		protected override void ReportCounter(String name, CounterValue value, Unit unit, MetricTags tags) {
-			writer.Write(converter.GetRecords(name, tags, unit, value).Select(formatter.FormatRecord));
+			writer.Write(converter.GetRecords(name, tags, unit, value).Select(r => formatter?.FormatRecord(r) ?? r));
 		}
 
 		protected override void ReportMeter(String name, MeterValue value, Unit unit, TimeUnit rateUnit, MetricTags tags) {
-			writer.Write(converter.GetRecords(name, tags, unit, value).Select(formatter.FormatRecord));
+			writer.Write(converter.GetRecords(name, tags, unit, value).Select(r => formatter?.FormatRecord(r) ?? r));
 		}
 
 		protected override void ReportHistogram(String name, HistogramValue value, Unit unit, MetricTags tags) {
-			writer.Write(converter.GetRecords(name, tags, unit, value).Select(formatter.FormatRecord));
+			writer.Write(converter.GetRecords(name, tags, unit, value).Select(r => formatter?.FormatRecord(r) ?? r));
 		}
 
 		protected override void ReportTimer(String name, TimerValue value, Unit unit, TimeUnit rateUnit, TimeUnit durationUnit, MetricTags tags) {
-			writer.Write(converter.GetRecords(name, tags, unit, value).Select(formatter.FormatRecord));
+			writer.Write(converter.GetRecords(name, tags, unit, value).Select(r => formatter?.FormatRecord(r) ?? r));
 		}
 
 		protected override void ReportHealth(HealthStatus status) {
-			writer.Write(converter.GetRecords(status).Select(formatter.FormatRecord));
+			writer.Write(converter.GetRecords(status).Select(r => formatter?.FormatRecord(r) ?? r));
 		}
 
 	}
@@ -163,9 +177,9 @@ namespace Metrics.Influxdb
 
 		protected override InfluxConfig GetDefaultConfig(InfluxConfig defaultConfig) {
 			var config = base.GetDefaultConfig(defaultConfig) ?? new InfluxConfig();
-			config.Converter = config.Converter ?? new DefaultConverter(config.Precision);
+			config.Converter = config.Converter ?? new DefaultConverter();
 			config.Formatter = config.Formatter ?? new DefaultFormatter();
-			config.Writer    = config.Writer    ?? new InfluxdbHttpWriter(config);
+			//config.Writer    = config.Writer    ?? new InfluxdbHttpWriter(config);
 			return config;
 
 		}

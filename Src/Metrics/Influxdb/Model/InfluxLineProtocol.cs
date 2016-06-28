@@ -42,13 +42,14 @@ namespace Metrics.Influxdb.Model
 		/// The returned string does not end in a newline character.
 		/// </summary>
 		/// <param name="record">The <see cref="InfluxRecord"/> to generate the line protocol string for.</param>
+		/// <param name="precision">The timestamp precision to use in the LineProtocol syntax. If null, the default precision <see cref="InfluxConfig.Default.Precision"/> is used.</param>
 		/// <returns>A string representing the record in the line protocol format.</returns>
 		/// <remarks>Creates output in line protocol syntax (tags and timestamp are optional):
 		/// <c>measurement[,tag_key1=tag_value1...] field_key=field_value[,field_key2=field_value2] [timestamp]</c>
 		/// According to the InfluxDB docs, sorted tags get a performance boost when inserting data, see:
 		/// https://docs.influxdata.com/influxdb/v0.13/write_protocols/line/#key
 		/// </remarks>
-		public static String ToLineProtocol(this InfluxRecord record) {
+		public static String ToLineProtocol(this InfluxRecord record, InfluxPrecision? precision = null) {
 			if (record == null)
 				throw new ArgumentNullException(nameof(record));
 			if (String.IsNullOrWhiteSpace(record.Name))
@@ -61,7 +62,7 @@ namespace Metrics.Influxdb.Model
 			var sortedTags = record.Tags.OrderBy(t => t.Key); // sort for better insert performance, recommended by influxdb docs
 			foreach (var tag in sortedTags) sb.AppendFormat(",{0}", tag.ToLineProtocol());
 			sb.AppendFormat(" {0}", String.Join(",", record.Fields.Select(f => f.ToLineProtocol())));
-			if (record.Timestamp.HasValue) sb.AppendFormat(" {0}", FormatTimestamp(record.Timestamp.Value, record.Precision));
+			if (record.Timestamp.HasValue) sb.AppendFormat(" {0}", FormatTimestamp(record.Timestamp.Value, precision ?? InfluxConfig.Default.Precision));
 			return sb.ToString();
 		}
 
@@ -70,10 +71,11 @@ namespace Metrics.Influxdb.Model
 		/// Each record is separated by a newline character, but the complete output does not end in a newline.
 		/// </summary>
 		/// <param name="batch">The <see cref="InfluxBatch"/> to generate the line protocol string for.</param>
+		/// <param name="precision">The timestamp precision to use in the LineProtocol syntax. If null, the default precision <see cref="InfluxConfig.Default.Precision"/> is used.</param>
 		/// <returns>A string representing all records in the batch formatted in the line protocol format.</returns>
-		public static String ToLineProtocol(this InfluxBatch batch) {
+		public static String ToLineProtocol(this InfluxBatch batch, InfluxPrecision? precision = null) {
 			if (batch == null) throw new ArgumentNullException(nameof(batch));
-			return String.Join("\n", batch.Select(r => r.ToLineProtocol()));
+			return String.Join("\n", batch.Select(r => r.ToLineProtocol(precision)));
 		}
 
 		#endregion

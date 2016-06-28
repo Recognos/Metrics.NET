@@ -16,12 +16,7 @@ namespace Metrics.Influxdb.Adapters
 		/// <summary>
 		/// Gets or sets the current timestamp. This value is used when creating new <see cref="InfluxRecord"/> instances.
 		/// </summary>
-		public DateTime Timestamp { get; set; }
-
-		/// <summary>
-		/// Gets or sets the timestamp precision. This value is used when creating new <see cref="InfluxRecord"/> instances.
-		/// </summary>
-		public InfluxPrecision Precision { get; set; }
+		public DateTime? Timestamp { get; set; }
 
 		/// <summary>
 		/// Gets or sets the global tags. Global tags are added to all created <see cref="InfluxRecord"/> instances.
@@ -39,11 +34,8 @@ namespace Metrics.Influxdb.Adapters
 		/// <summary>
 		/// Creates a new <see cref="InfluxdbConverter"/> using the specified precision and tags.
 		/// </summary>
-		/// <param name="precision">The timestamp precision to use when creating new records. If this is null,
-		/// the default precision defined by <see cref="InfluxConfig.Default.Precision"/> is used.</param>
 		/// <param name="globalTags">The global tags that are added to all created <see cref="InfluxRecord"/> instances.</param>
-		public InfluxdbConverter(InfluxPrecision? precision, MetricTags? globalTags = null) {
-			Precision = precision ?? InfluxConfig.Default.Precision;
+		public InfluxdbConverter(MetricTags? globalTags = null) {
 			GlobalTags = globalTags ?? MetricTags.None;
 		}
 
@@ -223,7 +215,7 @@ namespace Metrics.Influxdb.Adapters
 
 		/// <summary>
 		/// Creates a new <see cref="InfluxRecord"/> from the specified name, tags, and fields.
-		/// This uses the timestamp and precision defined on this metrics converter instance.
+		/// This uses the timestamp defined on this metrics converter instance.
 		/// </summary>
 		/// <param name="name">The measurement or series name. This value is required and cannot be null or empty.</param>
 		/// <param name="tags">The optional tags to associate with this record.</param>
@@ -235,7 +227,7 @@ namespace Metrics.Influxdb.Adapters
 
 		/// <summary>
 		/// Creates a new <see cref="InfluxRecord"/> from the specified name, item name, tags, and fields.
-		/// This uses the timestamp and precision defined on this metrics converter instance.
+		/// This uses the timestamp defined on this metrics converter instance.
 		/// </summary>
 		/// <param name="name">The measurement or series name. This value is required and cannot be null or empty.</param>
 		/// <param name="itemName">The set item name. Can contain comma-separated key/value pairs.</param>
@@ -244,7 +236,7 @@ namespace Metrics.Influxdb.Adapters
 		/// <returns>A new <see cref="InfluxRecord"/> from the specified name, tags, and fields.</returns>
 		public InfluxRecord GetRecord(String name, String itemName, MetricTags tags, IEnumerable<InfluxField> fields) {
 			var jtags = InfluxUtils.JoinTags(itemName, GlobalTags, tags); // global tags must be first so they can get overridden
-			var record = new InfluxRecord(name, jtags, fields, Timestamp, Precision);
+			var record = new InfluxRecord(name, jtags, fields, Timestamp);
 			return record;
 		}
 	}
@@ -252,13 +244,11 @@ namespace Metrics.Influxdb.Adapters
 	public class DefaultConverter : InfluxdbConverter
 	{
 		/// <summary>
-		/// Creates a new <see cref="DefaultConverter"/> using the specified precision and tags.
+		/// Creates a new <see cref="DefaultConverter"/> using the specified tags.
 		/// </summary>
-		/// <param name="precision">The timestamp precision to use when creating new records. If this is null,
-		/// the default precision defined by <see cref="InfluxConfig.Default.Precision"/> is used.</param>
 		/// <param name="globalTags">The global tags that are added to all created <see cref="InfluxRecord"/> instances.</param>
-		public DefaultConverter(InfluxPrecision? precision = null, MetricTags? globalTags = null)
-			: base(precision, globalTags) {
+		public DefaultConverter(MetricTags? globalTags = null)
+			: base(globalTags) {
 		}
 	}
 }

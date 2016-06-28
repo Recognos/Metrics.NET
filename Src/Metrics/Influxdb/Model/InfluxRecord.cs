@@ -31,12 +31,6 @@ namespace Metrics.Influxdb.Model
 		/// </summary>
 		public DateTime? Timestamp { get; set; }
 
-		/// <summary>
-		/// The timestamp precision to use when formatting the timestamp in the line protocol format.
-		/// It is recommended to use as large a precision as possible to improve compression and bandwidth usage.
-		/// </summary>
-		public InfluxPrecision Precision { get; set; }
-
 
 		/// <summary>
 		/// Creates a new <see cref="InfluxRecord"/>.
@@ -45,8 +39,8 @@ namespace Metrics.Influxdb.Model
 		/// <param name="fields">The field values for this record.</param>
 		/// <param name="timestamp">The optional timestamp for this record.</param>
 		/// <param name="precision">The formatted timestamp precision. If null, uses <see cref="InfluxPrecision.Seconds"/>.</param>
-		public InfluxRecord(String name, IEnumerable<InfluxField> fields, DateTime? timestamp = null, InfluxPrecision? precision = null)
-			: this(name, null, fields, timestamp, precision) {
+		public InfluxRecord(String name, IEnumerable<InfluxField> fields, DateTime? timestamp = null)
+			: this(name, null, fields, timestamp) {
 		}
 
 		/// <summary>
@@ -57,10 +51,9 @@ namespace Metrics.Influxdb.Model
 		/// <param name="fields">The field values for this record.</param>
 		/// <param name="timestamp">The optional timestamp for this record.</param>
 		/// <param name="precision">The formatted timestamp precision. If null, uses <see cref="InfluxPrecision.Seconds"/>.</param>
-		public InfluxRecord(String name, IEnumerable<InfluxTag> tags, IEnumerable<InfluxField> fields, DateTime? timestamp = null, InfluxPrecision? precision = null) {
+		public InfluxRecord(String name, IEnumerable<InfluxTag> tags, IEnumerable<InfluxField> fields, DateTime? timestamp = null) {
 			Name = name ?? String.Empty;
 			Timestamp = timestamp;
-			Precision = precision ?? InfluxPrecision.Seconds;
 			Tags = tags?.ToList() ?? new List<InfluxTag>();
 			Fields = fields?.ToList() ?? new List<InfluxField>();
 		}

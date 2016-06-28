@@ -131,23 +131,18 @@ namespace Metrics.Influxdb.Adapters
 		/// <param name="record">The <see cref="InfluxRecord"/> to format the tag and field keys for.</param>
 		/// <returns>The same <see cref="InfluxRecord"/> instance with the tag and field keys formatted.</returns>
 		public virtual InfluxRecord FormatRecord(InfluxRecord record) {
-			if (MetricNameFormatter != null)
-				record.Name = FormatMetricName(null, record.Name, Unit.None, null) ?? record.Name;
+			record.Name = FormatMetricName(null, record.Name, Unit.None, null) ?? record.Name;
 
-			if (TagKeyFormatter != null) {
-				for (int i = 0; i < record.Tags.Count; i++) {
-					InfluxTag tag = record.Tags[i];
-					String fmtKey = FormatTagKey(tag.Key);
-					record.Tags[i] = new InfluxTag(fmtKey, tag.Value);
-				}
+			for (int i = 0; i < record.Tags.Count; i++) {
+				InfluxTag tag = record.Tags[i];
+				String fmtKey = FormatTagKey(tag.Key);
+				record.Tags[i] = new InfluxTag(fmtKey, tag.Value);
 			}
 
-			if (FieldKeyFormatter != null) {
-				for (int i = 0; i < record.Fields.Count; i++) {
-					InfluxField field = record.Fields[i];
-					String fmtKey = FormatFieldKey(field.Key);
-					record.Fields[i] = new InfluxField(fmtKey, field.Value);
-				}
+			for (int i = 0; i < record.Fields.Count; i++) {
+				InfluxField field = record.Fields[i];
+				String fmtKey = FormatFieldKey(field.Key);
+				record.Fields[i] = new InfluxField(fmtKey, field.Value);
 			}
 
 			return record;
@@ -155,6 +150,10 @@ namespace Metrics.Influxdb.Adapters
 
 	}
 
+	/// <summary>
+	/// The default formatter used for formatting records. Has some modifications over the default <see cref="Reporters.BaseReport"/>
+	/// implementation to generate cleaner output that follows the InfluxDB naming conventions.
+	/// </summary>
 	public class DefaultFormatter : InfluxdbFormatter
 	{
 		/// <summary>
@@ -193,7 +192,7 @@ namespace Metrics.Influxdb.Adapters
 			public static Boolean LowercaseNames { get; }
 
 			static Default() {
-				ContextNameFormatter = (contextStack, contextName) => String.Join(".", (contextStack ?? new String[0]).Concat(new[] { contextName }).Where(c => !String.IsNullOrWhiteSpace(c)));
+				ContextNameFormatter = (contextStack, contextName) => String.Join(".", contextStack.Concat(new[] { contextName }).Where(c => !String.IsNullOrWhiteSpace(c)));
 				MetricNameFormatter  = (context, name, unit, tags) => $"{context}.{name}".Trim(' ', '.');
 				TagKeyFormatter      = key => key;
 				FieldKeyFormatter    = key => key;

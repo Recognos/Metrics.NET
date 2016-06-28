@@ -100,24 +100,25 @@ namespace Metrics.Tests.Influxdb
 			var testNow = new DateTime(2016, 6, 1, 0, 0, 0, DateTimeKind.Utc);
 			var testTags = TagTestCases.Select(tc => tc.Tag);
 			var testFields = FieldTestCases.Select(tc => tc.Field);
+			var precision = InfluxConfig.Default.Precision;
 
 			// expected values
-			String expTime = InfluxLineProtocol.FormatTimestamp(testNow, InfluxPrecision.Seconds);
+			String expTime = InfluxLineProtocol.FormatTimestamp(testNow, precision);
 			String expTags = String.Join(",", TagTestCases.Select(tc => tc.Output));
 			String expFields = String.Join(",", FieldTestCases.Select(tc => tc.Output));
 			String expOutput = String.Format("test_name,{0} {1} {2}", expTags, expFields, expTime);
 
 			// assert line values match expected
 			new InfluxRecord("name spaces", new[] { new InfluxField("field1", 123456) })
-				.ToLineProtocol().Should().Be(@"name\ spaces field1=123456i");
+				.ToLineProtocol(precision).Should().Be(@"name\ spaces field1=123456i");
 			new InfluxRecord("test_name", new[] { new InfluxTag("tag1", "value1") }, new[] { new InfluxField("field1", 123456) })
-				.ToLineProtocol().Should().Be(@"test_name,tag1=value1 field1=123456i");
+				.ToLineProtocol(precision).Should().Be(@"test_name,tag1=value1 field1=123456i");
 			new InfluxRecord("test_name", new[] { new InfluxTag("tag1", "value1"), new InfluxTag("tag2", "value2") }, new[] { new InfluxField("field1", 123456), new InfluxField("field2", true) })
-				.ToLineProtocol().Should().Be(@"test_name,tag1=value1,tag2=value2 field1=123456i,field2=True");
+				.ToLineProtocol(precision).Should().Be(@"test_name,tag1=value1,tag2=value2 field1=123456i,field2=True");
 			new InfluxRecord("test_name", new[] { new InfluxTag("tag1", "value1") }, new[] { new InfluxField("field1", "test string") }, testNow)
-				.ToLineProtocol().Should().Be($@"test_name,tag1=value1 field1=""test string"" {expTime}");
+				.ToLineProtocol(precision).Should().Be($@"test_name,tag1=value1 field1=""test string"" {expTime}");
 			new InfluxRecord("test_name", testTags, testFields, testNow)
-				.ToLineProtocol().Should().Be(expOutput);
+				.ToLineProtocol(precision).Should().Be(expOutput);
 		}
 
 		[Fact]
@@ -125,15 +126,16 @@ namespace Metrics.Tests.Influxdb
 			var testNow = new DateTime(2016, 6, 1, 0, 0, 0, DateTimeKind.Utc);
 			var testTags = TagTestCases.Select(tc => tc.Tag);
 			var testFields = FieldTestCases.Select(tc => tc.Field);
-			var expTime = InfluxLineProtocol.FormatTimestamp(testNow, InfluxPrecision.Seconds);
+			var precision = InfluxConfig.Default.Precision;
+			var expTime = InfluxLineProtocol.FormatTimestamp(testNow, precision);
 
 			// test with empty batch
 			InfluxBatch batch = new InfluxBatch();
-			batch.ToLineProtocol().Should().BeEmpty();
+			batch.ToLineProtocol(precision).Should().BeEmpty();
 
 			// test with single record
 			batch.Add(new InfluxRecord("test_name", new[] { new InfluxTag("tag1", "value1") }, new[] { new InfluxField("field1", 123456) }));
-			batch.ToLineProtocol().Should().NotEndWith("\n").And.Be(@"test_name,tag1=value1 field1=123456i");
+			batch.ToLineProtocol(precision).Should().NotEndWith("\n").And.Be(@"test_name,tag1=value1 field1=123456i");
 			batch.Clear();
 
 			// test with multiple records
@@ -151,13 +153,13 @@ namespace Metrics.Tests.Influxdb
 				$@"test_name5,tag5=value5 field5=561234i {expTime}"
 			);
 
-			batch.ToLineProtocol().Should().NotEndWith("\n").And.Be(expOutput);
+			batch.ToLineProtocol(precision).Should().NotEndWith("\n").And.Be(expOutput);
 		}
 
 		[Fact]
 		public void InfluxReport_CanAddRecords_ForGauge() {
-			var writer = new InfluxdbTestWriter();
-			var config = new InfluxConfig("localhost", "testdb") { Writer = writer };
+			var config = new InfluxConfig("localhost", "testdb");
+			var writer = new InfluxdbTestWriter(config); config.Writer = writer;
 			var report = new InfluxdbHttpReport(config);
 			var context = new DefaultMetricsContext("TestContext");
 			var precision = config.Precision ?? InfluxConfig.Default.Precision;
@@ -172,13 +174,13 @@ namespace Metrics.Tests.Influxdb
 			writer.LastBatch.Should().HaveCount(1);
 
 			var expTime = InfluxLineProtocol.FormatTimestamp(metricsData.Timestamp, precision);
-			writer.LastBatch[0].ToLineProtocol().Should().Be($@"testcontext.test_gauge,key1=value1,key4=value4 value=123.456 {expTime}");
+			writer.LastBatch[0].ToLineProtocol(precision).Should().Be($@"testcontext.test_gauge,key1=value1,key4=value4 value=123.456 {expTime}");
 		}
 
 		[Fact]
 		public void InfluxReport_CanAddRecords_ForCounter() {
-			var writer = new InfluxdbTestWriter();
-			var config = new InfluxConfig("localhost", "testdb") { Writer = writer };
+			var config = new InfluxConfig("localhost", "testdb");
+			var writer = new InfluxdbTestWriter(config); config.Writer = writer;
 			var report = new InfluxdbHttpReport(config);
 			var context = new DefaultMetricsContext("TestContext");
 			var precision = config.Precision ?? InfluxConfig.Default.Precision;
@@ -192,7 +194,7 @@ namespace Metrics.Tests.Influxdb
 			writer.LastBatch.Should().HaveCount(1);
 
 			var expTime = InfluxLineProtocol.FormatTimestamp(metricsData.Timestamp, precision);
-			writer.LastBatch[0].ToLineProtocol().Should().Be($@"testcontext.test_counter,key1=value1,key4=value4 count=300i {expTime}");
+			writer.LastBatch[0].ToLineProtocol(precision).Should().Be($@"testcontext.test_counter,key1=value1,key4=value4 count=300i {expTime}");
 
 			// add with set item
 			counter.Increment("item1,item2=ival2,item3=ival3", 100);
@@ -201,14 +203,14 @@ namespace Metrics.Tests.Influxdb
 			writer.LastBatch.Should().HaveCount(2);
 
 			expTime = InfluxLineProtocol.FormatTimestamp(metricsData.Timestamp, precision);
-			writer.LastBatch[0].ToLineProtocol().Should().Be($@"testcontext.test_counter,key1=value1,key4=value4 count=400i {expTime}");
-			writer.LastBatch[1].ToLineProtocol().Should().Be($@"testcontext.test_counter,item2=ival2,item3=ival3,key1=value1,key4=value4 count=100i,percent=25 {expTime}");
+			writer.LastBatch[0].ToLineProtocol(precision).Should().Be($@"testcontext.test_counter,key1=value1,key4=value4 count=400i {expTime}");
+			writer.LastBatch[1].ToLineProtocol(precision).Should().Be($@"testcontext.test_counter,item2=ival2,item3=ival3,key1=value1,key4=value4 count=100i,percent=25 {expTime}");
 		}
 
 		[Fact]
 		public void InfluxReport_CanAddRecords_ForMeter() {
-			var writer = new InfluxdbTestWriter();
-			var config = new InfluxConfig("localhost", "testdb") { Writer = writer };
+			var config = new InfluxConfig("localhost", "testdb");
+			var writer = new InfluxdbTestWriter(config); config.Writer = writer;
 			var report = new InfluxdbHttpReport(config);
 			var context = new DefaultMetricsContext("TestContext");
 			var precision = config.Precision ?? InfluxConfig.Default.Precision;
@@ -222,7 +224,7 @@ namespace Metrics.Tests.Influxdb
 			writer.LastBatch.Should().HaveCount(1);
 
 			var expTime = InfluxLineProtocol.FormatTimestamp(metricsData.Timestamp, precision);
-			writer.LastBatch[0].ToLineProtocol().Should().StartWith($@"testcontext.test_meter,key1=value1,key4=value4 count=300i,mean_rate=").And.EndWith($@",1_min_rate=0,5_min_rate=0,15_min_rate=0 {expTime}"); ;
+			writer.LastBatch[0].ToLineProtocol(precision).Should().StartWith($@"testcontext.test_meter,key1=value1,key4=value4 count=300i,mean_rate=").And.EndWith($@",1_min_rate=0,5_min_rate=0,15_min_rate=0 {expTime}"); ;
 
 			// add with set item
 			meter.Mark("item1,item2=ival2,item3=ival3", 100);
@@ -231,14 +233,14 @@ namespace Metrics.Tests.Influxdb
 			writer.LastBatch.Should().HaveCount(2);
 
 			expTime = InfluxLineProtocol.FormatTimestamp(metricsData.Timestamp, precision);
-			writer.LastBatch[0].ToLineProtocol().Should().StartWith($@"testcontext.test_meter,key1=value1,key4=value4 count=400i,mean_rate=").And.EndWith($@",1_min_rate=0,5_min_rate=0,15_min_rate=0 {expTime}");
-			writer.LastBatch[1].ToLineProtocol().Should().StartWith($@"testcontext.test_meter,item2=ival2,item3=ival3,key1=value1,key4=value4 count=100i,percent=25,mean_rate=").And.EndWith($@",1_min_rate=0,5_min_rate=0,15_min_rate=0 {expTime}");
+			writer.LastBatch[0].ToLineProtocol(precision).Should().StartWith($@"testcontext.test_meter,key1=value1,key4=value4 count=400i,mean_rate=").And.EndWith($@",1_min_rate=0,5_min_rate=0,15_min_rate=0 {expTime}");
+			writer.LastBatch[1].ToLineProtocol(precision).Should().StartWith($@"testcontext.test_meter,item2=ival2,item3=ival3,key1=value1,key4=value4 count=100i,percent=25,mean_rate=").And.EndWith($@",1_min_rate=0,5_min_rate=0,15_min_rate=0 {expTime}");
 		}
 
 		[Fact]
 		public void InfluxReport_CanAddRecords_ForHistogram() {
-			var writer = new InfluxdbTestWriter();
-			var config = new InfluxConfig("localhost", "testdb") { Writer = writer };
+			var config = new InfluxConfig("localhost", "testdb");
+			var writer = new InfluxdbTestWriter(config); config.Writer = writer;
 			var report = new InfluxdbHttpReport(config);
 			var context = new DefaultMetricsContext("TestContext");
 			var precision = config.Precision ?? InfluxConfig.Default.Precision;
@@ -252,7 +254,7 @@ namespace Metrics.Tests.Influxdb
 			writer.LastBatch.Should().HaveCount(1);
 
 			var expTime = InfluxLineProtocol.FormatTimestamp(metricsData.Timestamp, precision);
-			writer.LastBatch[0].ToLineProtocol().Should().Be($@"testcontext.test_hist,key1=value1,key4=value4 count=1i,last=300,min=300,mean=300,max=300,stddev=0,median=300,sample_size=1i,percentile_75%=300,percentile_95%=300,percentile_98%=300,percentile_99%=300,percentile_99.9%=300 {expTime}");
+			writer.LastBatch[0].ToLineProtocol(precision).Should().Be($@"testcontext.test_hist,key1=value1,key4=value4 count=1i,last=300,min=300,mean=300,max=300,stddev=0,median=300,sample_size=1i,percentile_75%=300,percentile_95%=300,percentile_98%=300,percentile_99%=300,percentile_99.9%=300 {expTime}");
 
 			// add with set item
 			hist.Update(100, "item1,item2=ival2,item3=ival3");
@@ -261,13 +263,13 @@ namespace Metrics.Tests.Influxdb
 			writer.LastBatch.Should().HaveCount(1);
 
 			expTime = InfluxLineProtocol.FormatTimestamp(metricsData.Timestamp, precision);
-			writer.LastBatch[0].ToLineProtocol().Should().Be($@"testcontext.test_hist,key1=value1,key4=value4 count=2i,last=100,min=100,mean=200,max=300,stddev=100,median=300,sample_size=2i,percentile_75%=300,percentile_95%=300,percentile_98%=300,percentile_99%=300,percentile_99.9%=300 {expTime}");
+			writer.LastBatch[0].ToLineProtocol(precision).Should().Be($@"testcontext.test_hist,key1=value1,key4=value4 count=2i,last=100,min=100,mean=200,max=300,stddev=100,median=300,sample_size=2i,percentile_75%=300,percentile_95%=300,percentile_98%=300,percentile_99%=300,percentile_99.9%=300 {expTime}");
 		}
 
 		[Fact]
 		public void InfluxReport_CanAddRecords_ForTimer() {
-			var writer = new InfluxdbTestWriter();
-			var config = new InfluxConfig("localhost", "testdb") { Writer = writer };
+			var config = new InfluxConfig("localhost", "testdb");
+			var writer = new InfluxdbTestWriter(config); config.Writer = writer;
 			var report = new InfluxdbHttpReport(config);
 			var context = new DefaultMetricsContext("TestContext");
 			var precision = config.Precision ?? InfluxConfig.Default.Precision;
@@ -281,7 +283,7 @@ namespace Metrics.Tests.Influxdb
 			writer.LastBatch.Should().HaveCount(1);
 
 			var expTime = InfluxLineProtocol.FormatTimestamp(metricsData.Timestamp, precision);
-			writer.LastBatch[0].ToLineProtocol().Should().StartWith($@"testcontext.test_timer,key1=value1,key4=value4 active_sessions=0i,total_time=100i,count=1i,").And.EndWith($@",1_min_rate=0,5_min_rate=0,15_min_rate=0,last=100,min=100,mean=100,max=100,stddev=0,median=100,sample_size=1i,percentile_75%=100,percentile_95%=100,percentile_98%=100,percentile_99%=100,percentile_99.9%=100 {expTime}");
+			writer.LastBatch[0].ToLineProtocol(precision).Should().StartWith($@"testcontext.test_timer,key1=value1,key4=value4 active_sessions=0i,total_time=100i,count=1i,").And.EndWith($@",1_min_rate=0,5_min_rate=0,15_min_rate=0,last=100,min=100,mean=100,max=100,stddev=0,median=100,sample_size=1i,percentile_75%=100,percentile_95%=100,percentile_98%=100,percentile_99%=100,percentile_99.9%=100 {expTime}");
 
 			// add with set item
 			timer.Record(50, TimeUnit.Seconds, "item1,item2=ival2,item3=ival3");
@@ -290,13 +292,13 @@ namespace Metrics.Tests.Influxdb
 			writer.LastBatch.Should().HaveCount(1);
 
 			expTime = InfluxLineProtocol.FormatTimestamp(metricsData.Timestamp, precision);
-			writer.LastBatch[0].ToLineProtocol().Should().StartWith($@"testcontext.test_timer,key1=value1,key4=value4 active_sessions=0i,total_time=150i,count=2i,").And.EndWith($@",1_min_rate=0,5_min_rate=0,15_min_rate=0,last=50,min=50,mean=75,max=100,stddev=25,median=100,sample_size=2i,percentile_75%=100,percentile_95%=100,percentile_98%=100,percentile_99%=100,percentile_99.9%=100 {expTime}");
+			writer.LastBatch[0].ToLineProtocol(precision).Should().StartWith($@"testcontext.test_timer,key1=value1,key4=value4 active_sessions=0i,total_time=150i,count=2i,").And.EndWith($@",1_min_rate=0,5_min_rate=0,15_min_rate=0,last=50,min=50,mean=75,max=100,stddev=25,median=100,sample_size=2i,percentile_75%=100,percentile_95%=100,percentile_98%=100,percentile_99%=100,percentile_99.9%=100 {expTime}");
 		}
 
 		[Fact]
 		public void InfluxReport_CanAddRecords_ForHealthCheck() {
-			var writer = new InfluxdbTestWriter();
-			var config = new InfluxConfig("localhost", "testdb") { Writer = writer };
+			var config = new InfluxConfig("localhost", "testdb");
+			var writer = new InfluxdbTestWriter(config); config.Writer = writer;
 			var report = new InfluxdbHttpReport(config);
 			var context = new DefaultMetricsContext("TestContext");
 			var precision = config.Precision ?? InfluxConfig.Default.Precision;
@@ -315,11 +317,11 @@ namespace Metrics.Tests.Influxdb
 			writer.LastBatch.Should().HaveCount(5);
 
 			var expTime = InfluxLineProtocol.FormatTimestamp(metricsData.Timestamp, precision);
-			writer.LastBatch[0].ToLineProtocol().Should().Be($@"health_checks,name=health_check_1 ishealthy=True,message=""Healthy check!"" {expTime}");
-			writer.LastBatch[1].ToLineProtocol().Should().Be($@"health_checks,name=health_check_2 ishealthy=False,message=""Unhealthy check!"" {expTime}");
-			writer.LastBatch[2].ToLineProtocol().Should().Be($@"health_checks,name=health_check_3,tag3=key3 ishealthy=True,message=""Healthy check!"" {expTime}");
-			writer.LastBatch[3].ToLineProtocol().Should().Be($@"health_checks,name=health_check_4,tag_4=key\ 4 ishealthy=True,message=""Healthy check!"" {expTime}");
-			writer.LastBatch[4].ToLineProtocol().Should().Be($@"health_checks,name=health\ check\ 5,tag5=key5 ishealthy=True,message=""Healthy check!"" {expTime}");
+			writer.LastBatch[0].ToLineProtocol(precision).Should().Be($@"health_checks,name=health_check_1 ishealthy=True,message=""Healthy check!"" {expTime}");
+			writer.LastBatch[1].ToLineProtocol(precision).Should().Be($@"health_checks,name=health_check_2 ishealthy=False,message=""Unhealthy check!"" {expTime}");
+			writer.LastBatch[2].ToLineProtocol(precision).Should().Be($@"health_checks,name=health_check_3,tag3=key3 ishealthy=True,message=""Healthy check!"" {expTime}");
+			writer.LastBatch[3].ToLineProtocol(precision).Should().Be($@"health_checks,name=health_check_4,tag_4=key\ 4 ishealthy=True,message=""Healthy check!"" {expTime}");
+			writer.LastBatch[4].ToLineProtocol(precision).Should().Be($@"health_checks,name=health\ check\ 5,tag5=key5 ishealthy=True,message=""Healthy check!"" {expTime}");
 		}
 
 

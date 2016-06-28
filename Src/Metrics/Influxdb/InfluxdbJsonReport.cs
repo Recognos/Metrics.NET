@@ -36,12 +36,19 @@ namespace Metrics.Influxdb
 
 		protected override InfluxConfig GetDefaultConfig(InfluxConfig defaultConfig) {
 			var config = base.GetDefaultConfig(defaultConfig) ?? new InfluxConfig();
-			config.Formatter = (config.Formatter ?? new DefaultFormatter());
-			config.Formatter.LowercaseNames = false;
-			config.Formatter.ReplaceSpaceChar = null;
+			config.Formatter = config.Formatter ?? GetDefaultFormatter();
 			config.Writer = config.Writer ?? new InfluxdbJsonWriter(config);
 			return config;
 
+		}
+
+		private InfluxdbFormatter GetDefaultFormatter() {
+			var formatter = new DefaultFormatter(false, null);
+			formatter.ContextNameFormatter = null;
+			formatter.MetricNameFormatter  = null;
+			formatter.TagKeyFormatter      = null;
+			formatter.FieldKeyFormatter    = null;
+			return formatter;
 		}
 	}
 }

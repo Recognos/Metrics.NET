@@ -23,7 +23,7 @@ namespace Metrics.Influxdb.Model
 			public static UInt16 PortHttp { get; }
 
 			/// <summary>
-			/// The default <see cref="InfluxPrecision"/> specifier value. This value is: InfluxPrecision.Seconds
+			/// The default <see cref="InfluxPrecision"/> specifier value. This value is: <see cref="InfluxPrecision.Seconds"/>
 			/// </summary>
 			public static InfluxPrecision Precision { get; }
 
@@ -71,7 +71,7 @@ namespace Metrics.Influxdb.Model
 
 		/// <summary>
 		/// The precision of the timestamp value in the line protocol syntax.
-		/// This value should generally be as large as possible to reduce network traffic.
+		/// It is recommended to use as large a precision as possible to improve compression and bandwidth usage.
 		/// </summary>
 		public InfluxPrecision? Precision { get; set; }
 
