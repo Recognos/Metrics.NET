@@ -120,7 +120,7 @@ namespace Metrics.Influxdb.Model
 		/// Creates a new InfluxDB configuration object with the specified hostname, database, and precision.
 		/// </summary>
 		/// <param name="host">The hostname or IP address of the InfluxDB server.</param>
-		/// <param name="port">The port number to connect to on the InfluxDB server, or null to use the default port number.</param>
+		/// <param name="database">The database name to write values to. This should be null if using UDP since the database is defined in the UDP endpoint configuration on the InfluxDB server.</param>
 		/// <param name="precision">The precision of the timestamp value in the line protocol syntax.</param>
 		public InfluxConfig(String host, String database, InfluxPrecision? precision)
 			: this(host, null, database, null, precision) {

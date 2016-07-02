@@ -38,7 +38,6 @@ namespace Metrics.Influxdb.Model
 		/// <param name="name">The measurement or series name. This value is required and cannot be null or empty.</param>
 		/// <param name="fields">The field values for this record.</param>
 		/// <param name="timestamp">The optional timestamp for this record.</param>
-		/// <param name="precision">The formatted timestamp precision. If null, uses <see cref="InfluxPrecision.Seconds"/>.</param>
 		public InfluxRecord(String name, IEnumerable<InfluxField> fields, DateTime? timestamp = null)
 			: this(name, null, fields, timestamp) {
 		}
@@ -50,7 +49,6 @@ namespace Metrics.Influxdb.Model
 		/// <param name="tags">The optional tags to associate with this record.</param>
 		/// <param name="fields">The field values for this record.</param>
 		/// <param name="timestamp">The optional timestamp for this record.</param>
-		/// <param name="precision">The formatted timestamp precision. If null, uses <see cref="InfluxPrecision.Seconds"/>.</param>
 		public InfluxRecord(String name, IEnumerable<InfluxTag> tags, IEnumerable<InfluxField> fields, DateTime? timestamp = null) {
 			Name = name ?? String.Empty;
 			Timestamp = timestamp;

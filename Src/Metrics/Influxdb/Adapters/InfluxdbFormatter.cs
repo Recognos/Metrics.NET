@@ -216,7 +216,7 @@ namespace Metrics.Influxdb.Adapters
 		}
 
 		/// <summary>
-		/// Creates a new <see cref="InfluxdbFormatter"/> with default values, including the <see cref="LowercaseNames"/> and <see cref="ReplaceSpaceChar"/> properties.
+		/// Creates a new <see cref="InfluxdbFormatter"/> with default values, including the <see cref="InfluxdbFormatter.LowercaseNames"/> and <see cref="InfluxdbFormatter.ReplaceSpaceChar"/> properties.
 		/// The default formatters convert identifiers to lowercase, replace spaces with underscores, and if applicable, join multiple identifiers with periods.
 		/// </summary>
 		/// <param name="lowercase">If true, converts the string to lowercase.</param>

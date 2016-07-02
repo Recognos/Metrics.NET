@@ -104,7 +104,7 @@ namespace Metrics.Influxdb.Model
 		/// Splits the tag into a key/value pair using the equals sign. The tag should be in the format: {key}={value}.
 		/// If the tag is in an invalid format or cannot be parsed, this returns <see cref="InfluxTag.Empty"/>.
 		/// </summary>
-		/// <param name="tag">The tag to parse into an <see cref="InfluxTag"/>.</param>
+		/// <param name="keyValuePair">The tag to parse into an <see cref="InfluxTag"/>.</param>
 		/// <returns>The tag parsed into an <see cref="InfluxTag"/>, or <see cref="InfluxTag.Empty"/> if the input string is in an invalid format or could not be parsed.</returns>
 		public static InfluxTag ToInfluxTag(String keyValuePair) {
 			if (String.IsNullOrWhiteSpace(keyValuePair)) return InfluxTag.Empty;
