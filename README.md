@@ -22,6 +22,8 @@ A lot more [information and documentation are available in the wiki](https://git
 [List of External Reporters](https://github.com/Recognos/Metrics.NET/wiki/External-Reporters)
 
 
+**Note:** this repo is no longer being actively maintained. See [Recognos/Metrics.NET](https://github.com/Recognos/Metrics.NET) for a continuation of the project.
+
 ## License
 This library will always keep the same license as the original [Java Metrics library](https://github.com/dropwizard/metrics) (as long as its an open source, permisive license). This port is also inspired and contains some code from [Daniel Crenna's port](https://github.com/danielcrenna/metrics-net).
 
