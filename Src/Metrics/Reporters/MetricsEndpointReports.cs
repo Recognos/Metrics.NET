@@ -39,8 +39,9 @@ namespace Metrics.Reports
         {
             this
                 .WithTextReport("/text")
+                .WithJsonHealthV1Report("/v1/health")
+                .WithJsonHealthV2Report("/v2/health")
                 .WithJsonHealthReport("/health")
-                .WithJsonHealthReport("/v1/health")
                 .WithJsonV1Report("/v1/json")
                 .WithJsonV2Report("/v2/json")
                 .WithJsonReport("/json")
