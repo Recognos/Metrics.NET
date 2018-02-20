@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using Metrics.Endpoints;
@@ -17,6 +18,12 @@ namespace Owin.Metrics.Middleware
         private readonly OwinMetricsEndpointHandler endpointHandler;
         private AppFunc next;
 
+        public MetricsEndpointMiddleware(AppFunc next, string endpointPrefix, MetricsEndpointReports endpointConfig)
+            : this(endpointPrefix, endpointConfig)
+        {
+            this.next = next;
+        }
+        
         public MetricsEndpointMiddleware(string endpointPrefix, MetricsEndpointReports endpointConfig)
         {
             this.endpointPrefix = NormalizePrefix(endpointPrefix);

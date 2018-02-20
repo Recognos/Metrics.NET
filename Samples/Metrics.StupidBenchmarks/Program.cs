@@ -8,93 +8,38 @@ namespace Metrics.StupidBenchmarks
 {
     class CommonOptions
     {
-        [Option('c', HelpText = "Max Threads", DefaultValue = 32)]
+        [Value(0)]
+        public string Target { get; set; }
+        
+        [Option('c', HelpText = "Max Threads", Default = 32)]
         public int MaxThreads { get; set; }
 
-        [Option('s', HelpText = "Seconds", DefaultValue = 5)]
+        [Option('s', HelpText = "Seconds", Default = 5)]
         public int Seconds { get; set; }
 
-        [Option('d', HelpText = "Number of threads to decrement each step", DefaultValue = 4)]
+        [Option('d', HelpText = "Number of threads to decrement each step", Default = 4)]
         public int Decrement { get; set; }
-
-        [HelpOption]
-        public string GetUsage()
-        {
-            return HelpText.AutoBuild(this);
-        }
-    }
-
-    class Options
-    {
-        [VerbOption("Counter")]
-        public CommonOptions Counter { get; set; }
-
-        [VerbOption("Meter")]
-        public CommonOptions Meter { get; set; }
-
-        [VerbOption("Histogram")]
-        public CommonOptions Histogram { get; set; }
-
-        [VerbOption("Timer")]
-        public CommonOptions Timer { get; set; }
-
-        [VerbOption("EWMA")]
-        public CommonOptions Ewma { get; set; }
-
-        [VerbOption("EDR")]
-        public CommonOptions Edr { get; set; }
-
-        [VerbOption("hdr")]
-        public CommonOptions Hdr { get; set; }
-
-        [VerbOption("hdrtimer")]
-        public CommonOptions HdrTimer { get; set; }
-
-        [VerbOption("hdrsync")]
-        public CommonOptions HdrSync { get; set; }
-
-        [VerbOption("hdrsynctimer")]
-        public CommonOptions HdrSyncTimer { get; set; }
-
-        [VerbOption("Uniform")]
-        public CommonOptions Uniform { get; set; }
-
-        [VerbOption("Sliding")]
-        public CommonOptions Sliding { get; set; }
-
-        [VerbOption("TimerImpact")]
-        public CommonOptions TimerImpact { get; set; }
-
-        [VerbOption("NoOp")]
-        public CommonOptions NoOp { get; set; }
-
-        [HelpVerbOption]
-        public string GetUsage(string verb)
-        {
-            return HelpText.AutoBuild(this);
-        }
     }
 
     class Program
     {
-        private static string target;
-        private static CommonOptions targetOptions;
-
-        static void Main(string[] args)
+        static int Main(string[] args)
         {
-            var options = new Options();
-            if (!Parser.Default.ParseArguments(args, options, (t, o) => { target = t; targetOptions = o as CommonOptions; }))
-            {
-                Console.WriteLine(new CommonOptions().GetUsage());
-                Environment.Exit(CommandLine.Parser.DefaultExitCodeFail);
-            }
+            return Parser.Default.ParseArguments<CommonOptions>(args)
+                .MapResult(
+                    (CommonOptions opts) => RunCommitAndReturnExitCode(opts),
+                    errs => -1);
+        }
 
-            BenchmarkRunner.DefaultTotalSeconds = targetOptions.Seconds;
-            BenchmarkRunner.DefaultMaxThreads = targetOptions.MaxThreads;
+        private static int RunCommitAndReturnExitCode(CommonOptions opts)
+        {
+            
+            BenchmarkRunner.DefaultTotalSeconds = opts.Seconds;
+            BenchmarkRunner.DefaultMaxThreads = opts.MaxThreads;
 
             //Metric.Config.WithHttpEndpoint("http://localhost:1234/");
 
-            switch (target)
+            switch (opts.Target)
             {
                 case "noop":
                     BenchmarkRunner.Run("Noop", () => { });
@@ -145,6 +90,7 @@ namespace Metrics.StupidBenchmarks
                     BenchmarkRunner.Run("WorkWithTimer", () => load.DoSomeWorkWithATimer(), iterationsChunk: 10);
                     break;
             }
+            return 0;
         }
     }
 }

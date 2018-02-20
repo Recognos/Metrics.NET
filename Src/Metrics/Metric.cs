@@ -13,7 +13,7 @@ namespace Metrics
     /// </summary>
     public static class Metric
     {
-        private static readonly ILog log = LogProvider.GetCurrentClassLogger();
+        private static readonly ILog log = LogProvider.GetLogger(typeof(Metric));
 
         private static readonly DefaultMetricsContext globalContext;
         private static readonly MetricsConfig config;

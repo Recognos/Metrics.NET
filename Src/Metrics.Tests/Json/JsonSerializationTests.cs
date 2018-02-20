@@ -103,7 +103,7 @@ namespace Metrics.Tests.Json
 
             var result = JsonConvert.DeserializeObject<JsonMetricsContext>(json);
 
-            result.Gauges.ShouldBeEquivalentTo(jsonContext.Gauges);
+            result.Gauges.Should().BeEquivalentTo(jsonContext.Gauges);
         }
 
         [Fact]
@@ -122,7 +122,7 @@ namespace Metrics.Tests.Json
 
             var result = JsonConvert.DeserializeObject<JsonMetricsContext>(json);
 
-            result.Counters.ShouldBeEquivalentTo(jsonContext.Counters);
+            result.Counters.Should().BeEquivalentTo(jsonContext.Counters);
         }
 
         [Fact]
@@ -152,7 +152,7 @@ namespace Metrics.Tests.Json
 
             var result = JsonConvert.DeserializeObject<JsonMetricsContext>(json);
 
-            result.Meters.ShouldBeEquivalentTo(jsonContext.Meters);
+            result.Meters.Should().BeEquivalentTo(jsonContext.Meters);
         }
 
         [Fact]
@@ -191,7 +191,7 @@ namespace Metrics.Tests.Json
 
             var result = JsonConvert.DeserializeObject<JsonMetricsContext>(json);
 
-            result.Histograms.ShouldBeEquivalentTo(jsonContext.Histograms);
+            result.Histograms.Should().BeEquivalentTo(jsonContext.Histograms);
         }
 
         [Fact]
@@ -208,7 +208,7 @@ namespace Metrics.Tests.Json
 
             var result = JsonConvert.DeserializeObject<JsonMetricsContext>(json);
 
-            result.Histograms.ShouldBeEquivalentTo(jsonContext.Histograms);
+            result.Histograms.Should().BeEquivalentTo(jsonContext.Histograms);
         }
     }
 }

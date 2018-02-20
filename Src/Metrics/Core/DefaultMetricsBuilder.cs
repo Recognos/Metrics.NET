@@ -1,17 +1,22 @@
 ﻿
 using System;
 using Metrics.MetricData;
-using Metrics.PerfCounters;
 using Metrics.Sampling;
 namespace Metrics.Core
 {
     public sealed class DefaultMetricsBuilder : MetricsBuilder
     {
+#if NET45
         public MetricValueProvider<double> BuildPerformanceCounter(string name, Unit unit, string counterCategory, string counterName, string counterInstance)
         {
-            return new PerformanceCounterGauge(counterCategory, counterName, counterInstance);
+            return new Metrics.PerfCounters.PerformanceCounterGauge(counterCategory, counterName, counterInstance);
         }
-
+#else
+        public MetricValueProvider<double> BuildPerformanceCounter(string name, Unit unit, string counterCategory, string counterName, string counterInstance)
+        {
+            throw new NotSupportedException();
+        }
+#endif
         public MetricValueProvider<double> BuildGauge(string name, Unit unit, Func<double> valueProvider)
         {
             return new FunctionGauge(valueProvider);

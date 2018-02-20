@@ -80,76 +80,80 @@ namespace Metrics.Core
             }
         }
 
-        public void PerformanceCounter(string name, string counterCategory, string counterName, string counterInstance, Unit unit, MetricTags tags)
+        public void PerformanceCounter(string name, string counterCategory, string counterName, string counterInstance, Unit unit, MetricTags tags = default(MetricTags))
         {
             this.Gauge(name, () => this.metricsBuilder.BuildPerformanceCounter(name, unit, counterCategory, counterName, counterInstance), unit, tags);
         }
 
-        public void Gauge(string name, Func<double> valueProvider, Unit unit, MetricTags tags)
+        public void Gauge(string name, Func<double> valueProvider, Unit unit, MetricTags tags = default(MetricTags))
         {
             this.Gauge(name, () => this.metricsBuilder.BuildGauge(name, unit, valueProvider), unit, tags);
         }
 
-        public void Gauge(string name, Func<MetricValueProvider<double>> valueProvider, Unit unit, MetricTags tags)
+        public void Gauge(string name, Func<MetricValueProvider<double>> valueProvider, Unit unit, MetricTags tags = default(MetricTags))
         {
             this.registry.Gauge(name, valueProvider, unit, tags);
         }
-
-        public Counter Counter(string name, Unit unit, MetricTags tags)
+        public Counter Counter(string name, Unit unit, MetricTags tags = default(MetricTags))
         {
             return this.Counter(name, unit, () => this.metricsBuilder.BuildCounter(name, unit), tags);
         }
 
-        public Counter Counter<T>(string name, Unit unit, Func<T> builder, MetricTags tags)
+        public Counter Counter<T>(string name, Unit unit, Func<T> builder,MetricTags tags = default(MetricTags))
             where T : CounterImplementation
         {
             return this.registry.Counter(name, builder, unit, tags);
         }
 
-        public Meter Meter(string name, Unit unit, TimeUnit rateUnit, MetricTags tags)
+        public Meter Meter(string name, Unit unit, TimeUnit rateUnit = TimeUnit.Seconds, MetricTags tags = default(MetricTags))
         {
             return this.Meter(name, unit, () => this.metricsBuilder.BuildMeter(name, unit, rateUnit), rateUnit, tags);
         }
 
-        public Meter Meter<T>(string name, Unit unit, Func<T> builder, TimeUnit rateUnit, MetricTags tags)
+        public Meter Meter<T>(string name, Unit unit, Func<T> builder, TimeUnit rateUnit = TimeUnit.Seconds, MetricTags tags = default(MetricTags))
            where T : MeterImplementation
         {
             return this.registry.Meter(name, builder, unit, rateUnit, tags);
         }
 
-        public Histogram Histogram(string name, Unit unit, SamplingType samplingType, MetricTags tags)
+        public Histogram Histogram(string name, Unit unit, SamplingType samplingType = SamplingType.Default, MetricTags tags = default(MetricTags))
         {
             return this.Histogram(name, unit, () => this.metricsBuilder.BuildHistogram(name, unit, samplingType), tags);
         }
 
-        public Histogram Histogram<T>(string name, Unit unit, Func<T> builder, MetricTags tags)
+        public Histogram Histogram<T>(string name, Unit unit, Func<T> builder, MetricTags tags = default(MetricTags))
             where T : HistogramImplementation
         {
             return this.registry.Histogram(name, builder, unit, tags);
         }
 
-        public Histogram Histogram(string name, Unit unit, Func<Reservoir> builder, MetricTags tags)
+        public Histogram Histogram(string name, Unit unit, Func<Reservoir> builder, MetricTags tags = default(MetricTags))
         {
             return Histogram(name, unit, () => this.metricsBuilder.BuildHistogram(name, unit, builder()), tags);
         }
 
-        public Timer Timer(string name, Unit unit, SamplingType samplingType, TimeUnit rateUnit, TimeUnit durationUnit, MetricTags tags)
+        public Timer Timer(string name,
+            Unit unit, 
+            SamplingType samplingType = SamplingType.Default,
+            TimeUnit rateUnit = TimeUnit.Seconds,
+            TimeUnit durationUnit = TimeUnit.Milliseconds,
+            MetricTags tags = default(MetricTags))
         {
             return this.registry.Timer(name, () => this.metricsBuilder.BuildTimer(name, unit, rateUnit, durationUnit, samplingType), unit, rateUnit, durationUnit, tags);
         }
 
-        public Timer Timer<T>(string name, Unit unit, Func<T> builder, TimeUnit rateUnit, TimeUnit durationUnit, MetricTags tags)
+        public Timer Timer<T>(string name, Unit unit, Func<T> builder, TimeUnit rateUnit = TimeUnit.Seconds, TimeUnit durationUnit = TimeUnit.Milliseconds, MetricTags tags = default(MetricTags))
             where T : TimerImplementation
         {
             return this.registry.Timer(name, builder, unit, rateUnit, durationUnit, tags);
         }
 
-        public Timer Timer(string name, Unit unit, Func<HistogramImplementation> builder, TimeUnit rateUnit, TimeUnit durationUnit, MetricTags tags)
+        public Timer Timer(string name, Unit unit, Func<HistogramImplementation> builder, TimeUnit rateUnit = TimeUnit.Seconds, TimeUnit durationUnit = TimeUnit.Milliseconds, MetricTags tags = default(MetricTags))
         {
             return this.Timer(name, unit, () => this.metricsBuilder.BuildTimer(name, unit, rateUnit, durationUnit, builder()), rateUnit, durationUnit, tags);
         }
 
-        public Timer Timer(string name, Unit unit, Func<Reservoir> builder, TimeUnit rateUnit, TimeUnit durationUnit, MetricTags tags)
+        public Timer Timer(string name, Unit unit, Func<Reservoir> builder, TimeUnit rateUnit = TimeUnit.Seconds, TimeUnit durationUnit = TimeUnit.Milliseconds, MetricTags tags = default(MetricTags))
         {
             return this.Timer(name, unit, () => this.metricsBuilder.BuildTimer(name, unit, rateUnit, durationUnit, builder()), rateUnit, durationUnit, tags);
         }

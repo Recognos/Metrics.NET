@@ -8,7 +8,7 @@ namespace Metrics.Tests.Core
 {
     public class DefaultContextTests
     {
-        private readonly MetricsContext context = new DefaultMetricsContext();
+        private readonly DefaultMetricsContext context = new DefaultMetricsContext();
         public MetricsData CurrentData { get { return this.context.DataProvider.CurrentMetricsData; } }
 
         [Fact]
@@ -56,17 +56,20 @@ namespace Metrics.Tests.Core
         [Fact]
         public void MetricsContext_RaisesShutdownEventOnMetricsDisable()
         {
-            context.MonitorEvents();
+            
+            var m = context.Monitor();
+            
             context.Advanced.CompletelyDisableMetrics();
-            context.ShouldRaise("ContextShuttingDown");
+            
+            m.Should().Raise("ContextShuttingDown");
         }
 
         [Fact]
         public void MetricsContext_RaisesShutdownEventOnDispose()
         {
-            context.MonitorEvents();
+            var m = context.Monitor();
             context.Dispose();
-            context.ShouldRaise("ContextShuttingDown");
+            m.Should().Raise("ContextShuttingDown");
         }
 
         [Fact]
@@ -125,7 +128,7 @@ namespace Metrics.Tests.Core
                 context.Meter(name, Unit.Calls);
                 context.Histogram(name, Unit.Calls);
                 context.Timer(name, Unit.Calls);
-            })).ShouldNotThrow();
+            })).Should().NotThrow();
         }
 
         [Fact]

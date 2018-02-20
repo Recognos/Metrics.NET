@@ -12,7 +12,7 @@ namespace Metrics.Utils
 {
     public static class AppEnvironment
     {
-        private static readonly ILog log = LogProvider.GetCurrentClassLogger();
+        private static readonly ILog log = LogProvider.GetLogger(typeof(AppEnvironment));
 
         public static IEnumerable<EnvironmentEntry> Current
         {

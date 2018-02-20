@@ -30,7 +30,7 @@ namespace Metrics.Tests.Endpoints
         public void MetricsEndpointResponse_CannotCreateWithoutContent()
         {
             var action = new Action(() => new MetricsEndpointResponse(null, "content-type", Encoding.ASCII));
-            action.ShouldThrow<Exception>();
+            action.Should().Throw<Exception>();
         }
 
         [Fact]
@@ -39,23 +39,23 @@ namespace Metrics.Tests.Endpoints
             var action1 = new Action(() => new MetricsEndpointResponse("content", null, Encoding.ASCII));
             var action2 = new Action(() => new MetricsEndpointResponse("content", string.Empty, Encoding.ASCII));
             var action3 = new Action(() => new MetricsEndpointResponse("content", " ", Encoding.ASCII));
-            action1.ShouldThrow<Exception>();
-            action2.ShouldThrow<Exception>();
-            action3.ShouldThrow<Exception>();
+            action1.Should().Throw<Exception>();
+            action2.Should().Throw<Exception>();
+            action3.Should().Throw<Exception>();
         }
 
         [Fact]
         public void MetricsEndpointResponse_CannotCreateWithoutEncoding()
         {
             var action = new Action(() => new MetricsEndpointResponse("content", "content-type", null));
-            action.ShouldThrow<Exception>();
+            action.Should().Throw<Exception>();
         }
 
         [Fact]
         public void MetricsEndpointResponse_CannotCreateWithoutStatusCodeDescription()
         {
             var action = new Action(() => new MetricsEndpointResponse("content", "content-type", Encoding.ASCII, 200, null));
-            action.ShouldThrow<Exception>();
+            action.Should().Throw<Exception>();
         }
     }
 }

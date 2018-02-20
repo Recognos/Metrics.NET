@@ -1,4 +1,4 @@
-﻿using Topshelf;
+﻿using System;
 
 namespace Metrics.Central
 {
@@ -6,17 +6,14 @@ namespace Metrics.Central
     {
         static void Main(string[] args)
         {
-            HostFactory.Run(x =>
-            {
-                x.Service<MetricsService>();
+            MetricsService ms = new MetricsService();
 
-                x.StartAutomatically()
-                 .RunAsLocalService();
+            ms.Start();
 
-                x.SetDescription("Metrics.NET Central Service");
-                x.SetDisplayName("Metrics.NET Central");
-                x.SetServiceName("Metrics.Central");
-            });
+            Console.WriteLine("Press any key to exit...");
+            Console.ReadKey();
+
+            ms.Stop();
         }
     }
 }

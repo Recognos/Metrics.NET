@@ -13,7 +13,7 @@ namespace Metrics
 {
     public sealed class MetricsConfig : IDisposable, Utils.IHideObjectMembers
     {
-        private static readonly ILog log = LogProvider.GetCurrentClassLogger();
+        private static readonly ILog log = LogProvider.GetLogger(typeof(MetricsConfig));
 
         public static readonly bool GloballyDisabledMetrics = ReadGloballyDisableMetricsSetting();
 

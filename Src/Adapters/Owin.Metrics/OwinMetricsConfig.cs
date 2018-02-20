@@ -1,21 +1,27 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using Metrics;
 using Metrics.Reports;
 using Owin.Metrics.Middleware;
 namespace Owin.Metrics
 {
+    using MidFunc = System.Func<System.Func<System.Collections.Generic.IDictionary<string, object>,
+        System.Threading.Tasks.Task>, System.Func<System.Collections.Generic.IDictionary<string, object>,
+        System.Threading.Tasks.Task>>;
+    
     public class OwinMetricsConfig
     {
         public static readonly OwinMetricsConfig Disabled = new OwinMetricsConfig();
 
-        private readonly Action<object> middlewareRegistration;
+        private readonly Action<MidFunc> middlewareRegistration;
         private readonly MetricsContext context;
         private readonly Func<HealthStatus> healthStatus;
 
         private readonly bool isDisabled;
 
-        public OwinMetricsConfig(Action<object> middlewareRegistration, MetricsContext context, Func<HealthStatus> healthStatus)
+        public OwinMetricsConfig(Action<MidFunc> middlewareRegistration, MetricsContext context, Func<HealthStatus> healthStatus)
         {
             this.middlewareRegistration = middlewareRegistration;
             this.context = context;
@@ -93,8 +99,8 @@ namespace Owin.Metrics
 
             var endpointConfig = new MetricsEndpointReports(this.context.DataProvider, this.healthStatus);
             config(endpointConfig);
-            var metricsEndpointMiddleware = new MetricsEndpointMiddleware(endpointPrefix, endpointConfig);
-            this.middlewareRegistration(metricsEndpointMiddleware);
+            
+            this.middlewareRegistration(next => new MetricsEndpointMiddleware(next, endpointPrefix, endpointConfig).Invoke);
             return this;
         }
     }

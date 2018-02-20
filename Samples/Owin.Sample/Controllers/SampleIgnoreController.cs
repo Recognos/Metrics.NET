@@ -1,12 +1,11 @@
-﻿
+﻿using Microsoft.AspNetCore.Mvc;
+
 namespace Owin.Sample.Controllers
 {
-    using System.Web.Http;
-
-    [RoutePrefix("sampleignore")]
-    public class SampleIgnoreController : ApiController
+    [Route("sampleignore")]
+    public class SampleIgnoreController : Controller
     {
-        [Route("")]
+        [HttpGet]
         public string Get()
         {
             return "get";

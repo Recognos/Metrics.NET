@@ -36,7 +36,7 @@ namespace Metrics.Tests.Metrics
         {
             Action action = () => this.timer.Time(() => { throw new InvalidOperationException(); });
 
-            action.ShouldThrow<InvalidOperationException>();
+            action.Should().Throw<InvalidOperationException>();
 
             this.timer.Value.Rate.Count.Should().Be(1);
         }

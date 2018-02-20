@@ -4,20 +4,22 @@ using System.IO;
 using System.Linq;
 using Metrics.Json;
 using Newtonsoft.Json;
-using Topshelf;
 
 namespace Metrics.Central
 {
-    public class MetricsService : ServiceControl
+    public class MetricsService
     {
         private const string remotesFile = "remotes.txt";
 
-        public bool Start(HostControl hostControl)
+        public bool Start()
         {
             Metric.Config
-                .WithJsonDeserialzier(JsonConvert.DeserializeObject<JsonMetricsContext>)
+                .WithJsonDeserializer(JsonConvert.DeserializeObject<JsonMetricsContext>)
+#if NET45
                 .WithAllCounters();
-
+#else
+                .WithHttpEndpoint("");
+#endif
             var remotes = ReadRemotesFromConfig();
 
             foreach (var uri in remotes)
@@ -58,7 +60,7 @@ namespace Metrics.Central
             }
         }
 
-        public bool Stop(HostControl hostControl)
+        public bool Stop()
         {
             return true;
         }

@@ -1,0 +1,28 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>netcoreapp2.0</TargetFrameworks>
+    <IsPackable>false</IsPackable>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore" Version="2.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Cors" Version="2.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Hosting" Version="2.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc" Version="2.0.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Src\Adapters\AspNetCore.Metrics\AspNetCore.Metrics.csproj">
+      <Project>{8AD2C970-EC7F-405B-B267-9F0C1AAD7CC4}</Project>
+      <Name>AspNetCore.Metrics</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Src\Metrics\Metrics.csproj">
+      <Project>{95E29D40-DBEC-49E2-9CC5-26B88966DADE}</Project>
+      <Name>Metrics</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Metrics.Samples\Metrics.Samples.csproj">
+      <Project>{D08A63D0-F440-477C-9565-1264AE0879D0}</Project>
+      <Name>Metrics.Samples</Name>
+    </ProjectReference>
+  </ItemGroup>
+</Project>

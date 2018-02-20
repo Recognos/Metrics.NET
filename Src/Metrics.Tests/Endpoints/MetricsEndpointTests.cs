@@ -15,9 +15,9 @@ namespace Metrics.Tests.Endpoints
             var action2 = new Action(() => new MetricsEndpoint(" ", c => new MetricsEndpointResponse("test", "text/plain")));
             var action3 = new Action(() => new MetricsEndpoint("/", c => new MetricsEndpointResponse("test", "text/plain")));
 
-            action1.ShouldThrow<ArgumentException>();
-            action2.ShouldThrow<ArgumentException>();
-            action3.ShouldThrow<ArgumentException>();
+            action1.Should().Throw<ArgumentException>();
+            action2.Should().Throw<ArgumentException>();
+            action3.Should().Throw<ArgumentException>();
         }
 
         [Fact]

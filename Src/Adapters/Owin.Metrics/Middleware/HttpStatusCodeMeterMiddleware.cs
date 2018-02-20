@@ -13,6 +13,12 @@ namespace Owin.Metrics.Middleware
         private readonly Meter httpStatusCodeMeter;
         private AppFunc next;
 
+        public HttpStatusCodeMeterMiddleware(AppFunc next, MetricsContext context, string metricName, Regex[] ignorePatterns)
+            : this(context, metricName, ignorePatterns)
+        {
+            this.next = next;
+        }
+        
         public HttpStatusCodeMeterMiddleware(MetricsContext context, string metricName, Regex[] ignorePatterns)
             : base(ignorePatterns)
         {

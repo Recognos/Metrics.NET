@@ -11,7 +11,7 @@ namespace Metrics.Tests.Endpoints
         public void MetricsEndpointRequest_CannotCreateWithNullHeaders()
         {
             var action = new Action(() => new MetricsEndpointRequest(null));
-            action.ShouldThrow<Exception>();
+            action.Should().Throw<Exception>();
         }
     }
 }

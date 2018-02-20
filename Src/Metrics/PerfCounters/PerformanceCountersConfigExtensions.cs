@@ -1,4 +1,5 @@
-﻿using Metrics.PerfCounters;
+﻿#if NET45
+using Metrics.PerfCounters;
 
 namespace Metrics
 {
@@ -45,3 +46,4 @@ namespace Metrics
         }
     }
 }
+#endif

@@ -9,7 +9,7 @@ namespace Metrics
         private static Func<string, JsonMetricsContext> jsonDeserializer;
 
 
-        public static MetricsConfig WithJsonDeserialzier(this MetricsConfig config, Func<string, JsonMetricsContext> jsonDeserializer)
+        public static MetricsConfig WithJsonDeserializer(this MetricsConfig config, Func<string, JsonMetricsContext> jsonDeserializer)
         {
             RemoteMetricsExtensions.jsonDeserializer = jsonDeserializer;
             return config;

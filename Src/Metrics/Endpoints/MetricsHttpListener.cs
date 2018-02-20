@@ -13,7 +13,7 @@ namespace Metrics.Endpoints
 {
     public sealed class MetricsHttpListener : IDisposable
     {
-        private static readonly ILog log = LogProvider.GetCurrentClassLogger();
+        private static readonly ILog log = LogProvider.GetLogger(typeof(MetricsHttpListener));
 
         private const string NotFoundResponse = "<!doctype html><html><body>Resource not found</body></html>";
         private readonly HttpListener httpListener;

@@ -1,7 +1,6 @@
 ﻿using System;
 using Metrics.Core;
 using Metrics.MetricData;
-using Metrics.PerfCounters;
 using Metrics.Sampling;
 using Metrics.Utils;
 
@@ -18,11 +17,18 @@ namespace Metrics.Tests
             this.scheduler = scheduler;
         }
 
+#if NET45
         public MetricValueProvider<double> BuildPerformanceCounter(string name, Unit unit, string counterCategory, string counterName, string counterInstance)
         {
-            return new PerformanceCounterGauge(counterCategory, counterName, counterInstance);
+            return new Metrics.PerfCounters.PerformanceCounterGauge(counterCategory, counterName, counterInstance);
         }
-
+#else
+        public MetricValueProvider<double> BuildPerformanceCounter(string name, Unit unit, string counterCategory, string counterName, string counterInstance)
+        {
+            throw new NotSupportedException();
+        }
+#endif
+        
         public MetricValueProvider<double> BuildGauge(string name, Unit unit, Func<double> valueProvider)
         {
             return new FunctionGauge(valueProvider);

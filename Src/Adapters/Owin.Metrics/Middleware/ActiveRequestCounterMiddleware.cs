@@ -6,13 +6,21 @@ using System.Threading.Tasks;
 
 namespace Owin.Metrics.Middleware
 {
+    using AppFunc = Func<IDictionary<string, object>, Task>;
+
     /// <summary>
     /// Owin middleware that counts the number of active requests.
     /// </summary>
     public class ActiveRequestCounterMiddleware : MetricMiddleware
     {
         private readonly Counter activeRequests;
-        private Func<IDictionary<string, object>, Task> next;
+        private AppFunc next;
+
+        public ActiveRequestCounterMiddleware(AppFunc next, MetricsContext context, string metricName, Regex[] ignorePatterns)
+            : this(context, metricName, ignorePatterns)
+        {
+            this.next = next;
+        }
 
         public ActiveRequestCounterMiddleware(MetricsContext context, string metricName, Regex[] ignorePatterns)
             : base(ignorePatterns)
@@ -20,7 +28,7 @@ namespace Owin.Metrics.Middleware
             this.activeRequests = context.Counter(metricName, Unit.Custom("ActiveRequests"));
         }
 
-        public void Initialize(Func<IDictionary<string, object>, Task> next)
+        public void Initialize(AppFunc next)
         {
             this.next = next;
         }

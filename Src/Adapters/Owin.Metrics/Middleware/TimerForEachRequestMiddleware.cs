@@ -18,6 +18,11 @@ namespace Owin.Metrics.Middleware
 
         private AppFunc next;
 
+        public TimerForEachRequestMiddleware(AppFunc next, MetricsContext context, Regex[] ignorePatterns)
+            : this(context, ignorePatterns)
+        {
+            this.next = next;
+        }
         public TimerForEachRequestMiddleware(MetricsContext context, Regex[] ignorePatterns)
             : base(ignorePatterns)
         {

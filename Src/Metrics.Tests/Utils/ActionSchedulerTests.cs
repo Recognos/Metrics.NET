@@ -127,7 +127,7 @@ namespace Metrics.Tests.Utils
         public void ActionScheduler_CannotCreateWithInvalidParameter()
         {
             var action = new Action(() => new ActionScheduler(-2));
-            action.ShouldThrow<Exception>();
+            action.Should().Throw<Exception>();
         }
 
         [Fact]

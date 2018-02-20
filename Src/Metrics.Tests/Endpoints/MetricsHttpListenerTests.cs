@@ -81,7 +81,7 @@ namespace Metrics.Tests.Endpoints
             using (var config = CreateConfig().WithHttpEndpoint("http://localhost:58888/metricstest/HttpListenerTests/sameendpoint/"))
             {
                 var action = new Action(() => config.WithHttpEndpoint("http://localhost:58888/metricstest/HttpListenerTests/sameendpoint/"));
-                action.ShouldThrow<Exception>();
+                action.Should().Throw<Exception>();
             }
         }
 

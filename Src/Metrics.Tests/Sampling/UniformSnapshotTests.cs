@@ -132,9 +132,9 @@ namespace Metrics.Tests.Sampling
         [Fact]
         public void UniformSnapshot_ThrowsOnBadQuantileValue()
         {
-            ((Action)(() => snapshot.GetValue(-0.5))).ShouldThrow<ArgumentException>();
-            ((Action)(() => snapshot.GetValue(1.5))).ShouldThrow<ArgumentException>();
-            ((Action)(() => snapshot.GetValue(double.NaN))).ShouldThrow<ArgumentException>();
+            ((Action)(() => snapshot.GetValue(-0.5))).Should().Throw<ArgumentException>();
+            ((Action)(() => snapshot.GetValue(1.5))).Should().Throw<ArgumentException>();
+            ((Action)(() => snapshot.GetValue(double.NaN))).Should().Throw<ArgumentException>();
         }
     }
 }

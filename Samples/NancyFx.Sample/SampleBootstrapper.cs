@@ -27,7 +27,7 @@ namespace NancyFx.Sample
         {
             base.ApplicationStartup(container, pipelines);
 
-            StatelessAuthentication.Enable(pipelines, new StatelessAuthenticationConfiguration(AuthenticateUser));
+            StatelessAuthentication.Enable(pipelines, new StatelessAuthenticationConfiguration(context => context.CurrentUser));
 
             Metric.Config
                 .WithReporting(r =>
@@ -55,20 +55,6 @@ namespace NancyFx.Sample
                         .WithHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
                 }
             };
-        }
-
-        class FakeUser : IUserIdentity
-        {
-            public IEnumerable<string> Claims { get { yield return "Admin"; } }
-            public string UserName
-            {
-                get { return "admin"; }
-            }
-        }
-
-        private IUserIdentity AuthenticateUser(NancyContext context)
-        {
-            return new FakeUser();
         }
 
         protected override void ConfigureApplicationContainer(TinyIoCContainer container)

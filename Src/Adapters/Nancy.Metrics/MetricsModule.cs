@@ -46,7 +46,7 @@ namespace Nancy.Metrics
 
             Config.ModuleConfigAction?.Invoke(this);
 
-            Get["/"] = _ =>
+            Get<Response>("/", _ =>
             {
                 if (!this.Request.Url.Path.EndsWith("/"))
                 {
@@ -59,14 +59,14 @@ namespace Nancy.Metrics
                     response.WithHeader("Content-Encoding", "gzip");
                 }
                 return response;
-            };
+            });
 
-            Get["/{path*}"] = p =>
+            Get<Response>("/{path*}", p =>
             {
                 var path = (string)p.path;
                 var endpointResponse = Config.Handler.Process(path, this.Request);
                 return endpointResponse != null ? GetResponse(endpointResponse) : HttpStatusCode.NotFound;
-            };
+            });
         }
 
         private static Response GetResponse(MetricsEndpointResponse endpointResponse)

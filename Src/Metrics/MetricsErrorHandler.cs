@@ -7,7 +7,7 @@ namespace Metrics
 {
     public class MetricsErrorHandler
     {
-        private static readonly ILog log = LogProvider.GetCurrentClassLogger();
+        private static readonly ILog log = LogProvider.GetLogger(typeof(MetricsErrorHandler));
         private static readonly Meter errorMeter = Metric.Internal.Meter("Metrics Errors", Unit.Errors);
 
         private readonly ConcurrentBag<Action<Exception, string>> handlers = new ConcurrentBag<Action<Exception, string>>();

@@ -14,6 +14,12 @@ namespace Owin.Metrics.Middleware
         private readonly Histogram histogram;
         private AppFunc next;
 
+        public PostAndPutRequestSizeHistogramMiddleware(AppFunc next, MetricsContext context, string metricName, Regex[] ignorePatterns)
+            : this(context, metricName, ignorePatterns)
+        {
+            this.next = next;
+        }
+        
         public PostAndPutRequestSizeHistogramMiddleware(MetricsContext context, string metricName, Regex[] ignorePatterns)
             : base(ignorePatterns)
         {

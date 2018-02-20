@@ -20,6 +20,12 @@ namespace Owin.Metrics.Middleware
         {
             this.requestTimer = context.Timer(metricName, Unit.Requests);
         }
+        
+        public RequestTimerMiddleware(AppFunc next, MetricsContext context, string metricName, Regex[] ignorePatterns)
+            : this(context, metricName, ignorePatterns)
+        {
+            this.next = next;
+        }
 
         public void Initialize(AppFunc next)
         {

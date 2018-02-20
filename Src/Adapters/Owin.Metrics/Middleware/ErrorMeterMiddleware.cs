@@ -14,6 +14,12 @@ namespace Owin.Metrics.Middleware
         private readonly Meter errorMeter;
         private AppFunc next;
 
+        public ErrorMeterMiddleware(AppFunc next, MetricsContext context, string metricName, Regex[] ignorePatterns)
+            : this(context, metricName, ignorePatterns)
+        {
+            this.next = next;
+        }
+        
         public ErrorMeterMiddleware(MetricsContext context, string metricName, Regex[] ignorePatterns)
             : base(ignorePatterns)
         {

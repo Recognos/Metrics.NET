@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Threading.Tasks;
 using Metrics.Samples;
 using Metrics.Utils;
-using Microsoft.Owin.Hosting;
+using Microsoft.AspNetCore;
+using Microsoft.AspNetCore.Hosting;
 
 namespace Owin.Sample
 {
@@ -10,15 +12,19 @@ namespace Owin.Sample
     {
         static void Main(string[] args)
         {
-            const string url = "http://localhost:1235/";
+            const string url = "http://localhost:32132/";
 
             using (var scheduler = new ActionScheduler())
             {
-                using (WebApp.Start<Startup>(url))
+                using (var webHost = new WebHostBuilder()
+                    .UseKestrel()
+                    .UseStartup<Startup>()
+                    .UseUrls(url)
+                    .Build())
                 {
                     Console.WriteLine("Owin Running at {0}", url);
                     Console.WriteLine("Press any key to exit");
-                    Process.Start(string.Format("{0}metrics/", url));
+                    //Process.Start(string.Format("{0}metrics/", url));
 
                     SampleMetrics.RunSomeRequests();
 
@@ -33,7 +39,8 @@ namespace Owin.Sample
 
                     HealthChecksSample.RegisterHealthChecks();
 
-                    Console.ReadKey();
+                    webHost.Run();
+                    
                 }
             }
         }

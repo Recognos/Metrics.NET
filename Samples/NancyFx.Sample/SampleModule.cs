@@ -12,13 +12,13 @@ namespace NancyFx.Sample
             this.MetricForRequestTimeAndResponseSize("TestRequest", "Get", "/test");
             this.MetricForRequestSize("TestRequestSize", "Post", "/action");
 
-            Get["/test"] = _ => Response.AsText("test");
+            Get("/test", _ => Response.AsText("test"));
 
-            Post["/action"] = _ => HttpStatusCode.Accepted;
+            Post("/action", _ => HttpStatusCode.Accepted);
 
-            Get["/error"] = _ => { throw new InvalidOperationException(); };
+            Get("/error", _ => throw new InvalidOperationException());
 
-            Get["/item/{id}"] = p => Response.AsText((string)p.id, "text/plain");
+            Get("/item/{id}", p => Response.AsText((string)p.id, "text/plain"));
         }
     }
 }

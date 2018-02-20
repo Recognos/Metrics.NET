@@ -1,4 +1,6 @@
-﻿using Metrics.MetricData;
+﻿#if NET45
+
+using Metrics.MetricData;
 using System;
 using System.Diagnostics;
 using System.Security.Principal;
@@ -66,3 +68,4 @@ namespace Metrics.PerfCounters
         }
     }
 }
+#endif

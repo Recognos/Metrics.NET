@@ -62,7 +62,7 @@ namespace Metrics.Tests.HealthChecksTests
             HealthChecks.RegisterHealthCheck(new HealthCheck("test", () => { }));
 
             Action action = () => HealthChecks.RegisterHealthCheck(new HealthCheck("test", () => { }));
-            action.ShouldNotThrow<InvalidOperationException>();
+            action.Should().NotThrow<InvalidOperationException>();
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿
+﻿#if NET45
+
 using Metrics.Core;
 using Metrics.Logging;
 using System;
@@ -157,3 +158,4 @@ namespace Metrics.PerfCounters
         }
     }
 }
+#endif
