@@ -88,6 +88,7 @@
     <Compile Include="Core\DefaultDataProvider.cs" />
     <Compile Include="Core\DefaultRegistryDataProvider.cs" />
     <Compile Include="Core\SimpleMeter.cs" />
+    <Compile Include="Json\JsonHealthChecksV2.cs" />
     <Compile Include="Json\JsonMetric.cs" />
     <Compile Include="Json\JsonMetricsContext.cs" />
     <Compile Include="Json\JsonTimer.cs" />
@@ -96,7 +97,7 @@
     <Compile Include="Json\JsonGauge.cs" />
     <Compile Include="Json\JsonCounter.cs" />
     <Compile Include="Core\ReadOnlyMetricsContext.cs" />
-    <Compile Include="Json\JsonHealthChecks.cs" />
+    <Compile Include="Json\JsonHealthChecksV1.cs" />
     <Compile Include="MetricData\ConstantValue.cs" />
     <Compile Include="MetricData\CounterValue.cs" />
     <Compile Include="MetricData\EnvironmentEntry.cs" />

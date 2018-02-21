@@ -46,9 +46,10 @@ namespace Metrics
         /// </summary>
         /// <param name="name">Name of the health check.</param>
         /// <param name="check">Action to execute.</param>
-        public static void RegisterHealthCheck(string name, Action check)
+        /// <param name="tags">Optional set of tags that can be associated with the health check.</param>
+        public static void RegisterHealthCheck(string name, Action check, MetricTags tags = default(MetricTags))
         {
-            RegisterHealthCheck(new HealthCheck(name, check));
+            RegisterHealthCheck(new HealthCheck(name, check, tags));
         }
 
         /// <summary>
@@ -57,9 +58,10 @@ namespace Metrics
         /// </summary>
         /// <param name="name">Name of the health check.</param>
         /// <param name="check">Function to execute.</param>
-        public static void RegisterHealthCheck(string name, Func<string> check)
+        /// <param name="tags">Optional set of tags that can be associated with the health check.</param>
+        public static void RegisterHealthCheck(string name, Func<string> check, MetricTags tags = default(MetricTags))
         {
-            RegisterHealthCheck(new HealthCheck(name, check));
+            RegisterHealthCheck(new HealthCheck(name, check, tags));
         }
 
         /// <summary>
@@ -68,9 +70,10 @@ namespace Metrics
         /// </summary>
         /// <param name="name">Name of the health check.</param>
         /// <param name="check">Function to execute</param>
-        public static void RegisterHealthCheck(string name, Func<HealthCheckResult> check)
+        /// <param name="tags">Optional set of tags that can be associated with the health check.</param>
+        public static void RegisterHealthCheck(string name, Func<HealthCheckResult> check, MetricTags tags = default(MetricTags))
         {
-            RegisterHealthCheck(new HealthCheck(name, check));
+            RegisterHealthCheck(new HealthCheck(name, check, tags));
         }
 
         /// <summary>
